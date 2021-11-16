@@ -631,15 +631,26 @@ class MockDataTesla {
     [1633959000, 787.65, 801.24, 785.50, 791.94, 14175800],
     [1634064472, 800.93, 812.32, 796.57, 811.41, 17289281],
   ];
-
-  static List<CandleData> get candles => _rawData
-      .map((row) => CandleData(
-            timestamp: row[0] * 1000,
-            open: row[1]?.toDouble(),
-            high: row[2]?.toDouble(),
-            low: row[3]?.toDouble(),
-            close: row[4]?.toDouble(),
-            volume: row[5]?.toDouble(),
-          ))
-      .toList();
+  static List<List<double>> line =
+      _rawData.map((e) => [e[2] as double]).toList();
+  // static List<CandleData> get candles => _rawData
+  //     .map((row) => CandleData(
+  //         timestamp: row[0] * 1000,
+  //         open: row[1]?.toDouble(),
+  //         high: row[2]?.toDouble(),
+  //         low: row[3]?.toDouble(),
+  //         close: row[4]?.toDouble(),
+  //         volume: row[5]?.toDouble(),
+  //         trends: row[6]))
+  //     .toList();
+  static List<CandleData> get candles => List.generate(
+      _rawData.length,
+      (i) => CandleData(
+          timestamp: _rawData[i][0] * 1000,
+          open: _rawData[i][1]?.toDouble(),
+          high: _rawData[i][2]?.toDouble(),
+          low: _rawData[i][3]?.toDouble(),
+          close: _rawData[i][4]?.toDouble(),
+          volume: _rawData[i][5]?.toDouble(),
+          trends: line[i]));
 }

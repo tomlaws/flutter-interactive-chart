@@ -101,9 +101,14 @@ class _MyAppState extends State<MyApp> {
     final ma30 = CandleData.computeMA(_data, 30);
     final ma90 = CandleData.computeMA(_data, 90);
 
+    final ema7 = CandleData.computeEma(_data, 7);
+    final ema30 = CandleData.computeEma(_data, 30);
+    final ema90 = CandleData.computeEma(_data, 90);
     for (int i = 0; i < _data.length; i++) {
-      _data[i].trends = [ma7[i], ma30[i], ma90[i]];
+      _data[i].trends = [ma7[i], ma30[i], ma90[i], ema7[i], ema30[i], ema90[i]];
     }
+    //final test = CandleData.computeEmaRaw([10, 22, 15, 50, 40], 5);
+    //print(test);
   }
 
   _removeTrendLines() {
