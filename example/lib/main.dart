@@ -96,7 +96,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _update() async {
     var url = Uri.parse(
-        'http://chart4.spsystem.info/pserver/chartdata_query.php?prod_code=HSIZ1&second=$_period');
+        'https://chart4.spsystem.info/pserver/chartdata_query.php?prod_code=HSIZ1&second=$_period');
     var response = await http.get(url);
     var body = response.body;
     var data = body.split(':');
