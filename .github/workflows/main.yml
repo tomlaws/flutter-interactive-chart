@@ -70,4 +70,6 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPCHART_1F37D }}'
           channelId: live
           projectId: spchart-1f37d
+          # Working directory does not apply here
+          entryPoint: ./example
       
