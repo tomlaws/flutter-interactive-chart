@@ -646,11 +646,11 @@ class MockDataTesla {
   static List<CandleData> get candles => List.generate(
       _rawData.length,
       (i) => CandleData(
-          timestamp: _rawData[i][0] * 1000,
-          open: _rawData[i][1]?.toDouble(),
-          high: _rawData[i][2]?.toDouble(),
-          low: _rawData[i][3]?.toDouble(),
-          close: _rawData[i][4]?.toDouble(),
-          volume: _rawData[i][5]?.toDouble(),
-          trends: line[i]));
+            timestamp: _rawData[i][0] * 1000,
+            open: _rawData[i][1]?.toDouble(),
+            high: _rawData[i][2]?.toDouble(),
+            low: _rawData[i][3]?.toDouble(),
+            close: _rawData[i][4]?.toDouble(),
+            volume: _rawData[i][5]?.toDouble(),
+          ));
 }

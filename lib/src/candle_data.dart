@@ -71,46 +71,50 @@ class CandleData {
     return result;
   }
 
-  static List<double> ema(List<double?> inReal, int inTimePeriod, double k1) {
-    List<double> outReal = List<double>.filled(inReal.length, 0);
-    int lookbackTotal = inTimePeriod - 1;
-    int startIdx = lookbackTotal;
-    int today = startIdx - lookbackTotal;
-    int i = inTimePeriod;
-    double tempReal = 0.0;
-    for (; i > 0;) {
-      tempReal += inReal.elementAt(today) ?? 0.0;
-      today++;
-      i--;
+  static List<double?> _ema(List<double?> inReal, int inTimePeriod, double k1) {
+    try {
+      List<double?> outReal = List<double?>.filled(inReal.length, null);
+      int lookbackTotal = inTimePeriod - 1;
+      int startIdx = lookbackTotal;
+      int today = startIdx - lookbackTotal;
+      int i = inTimePeriod;
+      double tempReal = 0.0;
+      for (; i > 0;) {
+        tempReal += inReal.elementAt(today) ?? 0.0;
+        today++;
+        i--;
+      }
+      double prevMA = tempReal / inTimePeriod;
+      for (; today <= startIdx;) {
+        prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
+        today++;
+      }
+      outReal[startIdx] = prevMA;
+      var outIdx = startIdx + 1;
+      for (; today < inReal.length;) {
+        prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
+        outReal[outIdx] = prevMA;
+        today++;
+        outIdx++;
+      }
+      return outReal;
+    } catch (ex) {
+      return List.filled(inReal.length, null);
     }
-    double prevMA = tempReal / inTimePeriod;
-    for (; today <= startIdx;) {
-      prevMA = (((inReal.elementAt(today) ?? 0.0) - prevMA) * k1) + prevMA;
-      today++;
-    }
-    outReal[startIdx] = prevMA;
-    var outIdx = startIdx + 1;
-    for (; today < inReal.length;) {
-      prevMA = (((inReal.elementAt(today) ?? 0.0) - prevMA) * k1) + prevMA;
-      outReal[outIdx] = prevMA;
-      today++;
-      outIdx++;
-    }
+  }
+
+  static List<double?> computeEMA(List<CandleData> data, int inTimePeriod) {
+    final k = 2.0 / (inTimePeriod + 1);
+    final outReal = _ema(data.map((e) => e.close).toList(), inTimePeriod, k);
     return outReal;
   }
 
-  static List<double> computeEma(List<CandleData> data, int inTimePeriod) {
-    final k = 2.0 / (inTimePeriod + 1);
-    final outReal = ema(data.map((e) => e.close).toList(), inTimePeriod, k);
-    return outReal;
-  }
-
-  static List<double> computeEmaRaw(List<double> data, int inTimePeriod) {
-    final k = 2.0 / (inTimePeriod + 1);
-    print(k);
-    final outReal = ema(data, inTimePeriod, k);
-    return outReal;
-  }
+  // static List<double?> computeEmaRaw(List<double> data, int inTimePeriod) {
+  //   final k = 2.0 / (inTimePeriod + 1);
+  //   print(k);
+  //   final outReal = ema(data, inTimePeriod, k);
+  //   return outReal;
+  // }
 
   @override
   String toString() => "<CandleData ($timestamp: $close)>";

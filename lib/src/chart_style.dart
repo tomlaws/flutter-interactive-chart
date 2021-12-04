@@ -32,6 +32,9 @@ class ChartStyle {
   /// The color to use when the `close` price is higher than `open` price.
   final Color priceGainColor;
 
+  /// The color to use when the `close` price is equal to `open` price.
+  final Color priceUnchangeColor;
+
   /// The color to use when the `close` price is lower than `open` price.
   final Color priceLossColor;
 
@@ -71,6 +74,7 @@ class ChartStyle {
       color: Colors.white,
     ),
     this.priceGainColor = Colors.green,
+    this.priceUnchangeColor = const Color(0xEE999999),
     this.priceLossColor = Colors.red,
     this.volumeColor = Colors.grey,
     this.trendLineStyles = const [],

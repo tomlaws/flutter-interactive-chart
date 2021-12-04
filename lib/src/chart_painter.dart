@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:interactive_chart/src/indicator.dart';
+import 'package:collection/collection.dart';
 
 import 'candle_data.dart';
 import 'painter_params.dart';
@@ -15,6 +17,7 @@ class ChartPainter extends CustomPainter {
   final TimeLabelGetter getTimeLabel;
   final PriceLabelGetter getPriceLabel;
   final OverlayInfoGetter getOverlayInfo;
+  List<double> occupied = [];
 
   ChartPainter({
     required this.params,
@@ -25,6 +28,7 @@ class ChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    occupied = [];
     // Draw time labels (dates) & price labels
     _drawTimeLabels(canvas, params);
     _drawPriceGridAndLabels(canvas, params);
@@ -110,6 +114,7 @@ class ChartPainter extends CustomPainter {
 
   void _drawSingleDay(canvas, PainterParams params, int i) {
     final candle = params.candles[i];
+    final additionalTrends = params.additionalTrends[i];
     final x = i * params.candleWidth;
     final thickWidth = max(params.candleWidth * 0.8, 0.8);
     final thinWidth = max(params.candleWidth * 0.2, 0.2);
@@ -119,9 +124,11 @@ class ChartPainter extends CustomPainter {
     final high = candle.high;
     final low = candle.low;
     if (open != null && close != null) {
-      final color = open > close
-          ? params.style.priceLossColor
-          : params.style.priceGainColor;
+      final color = open == close
+          ? params.style.priceUnchangeColor
+          : (open > close
+              ? params.style.priceLossColor
+              : params.style.priceGainColor);
       canvas.drawLine(
         Offset(x, params.fitPrice(open)),
         Offset(x, params.fitPrice(close)),
@@ -150,6 +157,7 @@ class ChartPainter extends CustomPainter {
           ..color = params.style.volumeColor,
       );
     }
+
     // Draw trend line
     for (int j = 0; j < candle.trends.length; j++) {
       final trendLinePaint = params.style.trendLineStyles.at(j) ??
@@ -160,6 +168,49 @@ class ChartPainter extends CustomPainter {
 
       final pt = candle.trends.at(j); // current data point
       final prevPt = params.candles.at(i - 1)?.trends.at(j);
+      if (pt != null && prevPt != null) {
+        canvas.drawLine(
+          Offset(x - params.candleWidth, params.fitPrice(prevPt)),
+          Offset(x, params.fitPrice(pt)),
+          trendLinePaint,
+        );
+      }
+      if (i == 0) {
+        // In the front, draw an extra line connecting to out-of-window data
+        if (pt != null && params.leadingTrends?.at(j) != null) {
+          canvas.drawLine(
+            Offset(x - params.candleWidth,
+                params.fitPrice(params.leadingTrends!.at(j)!)),
+            Offset(x, params.fitPrice(pt)),
+            trendLinePaint,
+          );
+        }
+      } else if (i == params.candles.length - 1) {
+        // At the end, draw an extra line connecting to out-of-window data
+        if (pt != null && params.trailingTrends?.at(j) != null) {
+          canvas.drawLine(
+            Offset(x, params.fitPrice(pt)),
+            Offset(
+              x + params.candleWidth,
+              params.fitPrice(params.trailingTrends!.at(j)!),
+            ),
+            trendLinePaint,
+          );
+        }
+      }
+    }
+
+    // Draw additional trend line
+    // Draw trend line
+    for (int j = 0; j < additionalTrends.length; j++) {
+      final trendLinePaint = params.style.trendLineStyles.at(j) ??
+          (Paint()
+            ..strokeWidth = 2.0
+            ..strokeCap = StrokeCap.round
+            ..color = Colors.blue);
+
+      final pt = additionalTrends.at(j); // current data point
+      final prevPt = params.additionalTrends.at(i - 1)?.at(j);
       if (pt != null && prevPt != null) {
         canvas.drawLine(
           Offset(x - params.candleWidth, params.fitPrice(prevPt)),
@@ -208,17 +259,31 @@ class ChartPainter extends CustomPainter {
           ..color = params.style.selectionHighlightColor);
     canvas.restore();
     // Draw info pane
-    _drawTapInfoOverlay(canvas, params, candle);
+    final additionalTrends = params.additionalTrends[i];
+    _drawTapInfoOverlay(canvas, params, candle, additionalTrends);
+
+    // Draw data points
+    var px = params.xShift + i * params.candleWidth;
+    for (int i = 0; i < additionalTrends.length; i++) {
+      double? v = additionalTrends[i];
+      if (v == null) continue;
+      var py = params.fitPrice(v);
+      canvas.drawCircle(Offset(px, py), 6,
+          Paint()..color = params.style.trendLineStyles[i].color);
+    }
   }
 
-  void _drawTapInfoOverlay(canvas, PainterParams params, CandleData candle) {
+  void _drawTapInfoOverlay(canvas, PainterParams params, CandleData candle,
+      List<double?> additionalTrends) {
     final xGap = 8.0;
     final yGap = 4.0;
 
-    TextPainter makeTP(String text) => TextPainter(
+    TextPainter makeTP(String text, {Color? color}) => TextPainter(
           text: TextSpan(
             text: text,
-            style: params.style.overlayTextStyle,
+            style: color != null
+                ? params.style.overlayTextStyle.apply(color: color)
+                : params.style.overlayTextStyle,
           ),
         )
           ..textDirection = TextDirection.ltr
@@ -258,12 +323,21 @@ class ChartPainter extends CustomPainter {
     canvas.translate(dx, dy);
 
     // Draw the background for overlay panel
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Offset.zero & Size(panelWidth, panelHeight),
-          Radius.circular(8),
-        ),
-        Paint()..color = params.style.overlayBackgroundColor);
+    RRect panelRect = RRect.fromRectAndRadius(
+      Offset.zero & Size(panelWidth, panelHeight),
+      Radius.circular(8),
+    );
+    var overlayBackgroundColor = params.style.overlayBackgroundColor;
+    if (candle.open != null && candle.close != null) {
+      if (candle.open! > candle.close!) {
+        overlayBackgroundColor = params.style.priceLossColor;
+      } else if (candle.open! < candle.close!) {
+        overlayBackgroundColor = params.style.priceGainColor;
+      } else {
+        overlayBackgroundColor = params.style.priceUnchangeColor;
+      }
+    }
+    canvas.drawRRect(panelRect, Paint()..color = overlayBackgroundColor);
 
     // Draw texts
     var y = 0.0;
@@ -285,6 +359,88 @@ class ChartPainter extends CustomPainter {
     }
 
     canvas.restore();
+
+    if (additionalTrends.length > 0) {
+      final labels = params.additionalTrendLabels
+          .mapIndexed((i, text) =>
+              makeTP(text + ':', color: params.style.trendLineStyles[i].color))
+          .toList();
+      final values = additionalTrends
+          .map((text) => makeTP(text?.toStringAsFixed(2) ?? ''))
+          .toList();
+      // Track occpuied
+      occupied.addAll([dy, panelRect.bottom]);
+      for (int i = 0; i < additionalTrends.length; i++) {
+        double? v = additionalTrends[i];
+        if (v != null) {
+          canvas.save();
+          var y = params.fitPrice(v);
+          // check overlap
+          var py = getEmptySpace(y, 24, null);
+
+          //draw
+          final rowHeight = max(labels[i].height, values[i].height);
+          final rowWidth = labels[i].width + values[i].width + 24.0;
+          var px = pos.dx <= params.size.width / 2
+              ? pos.dx + fingerSize
+              : pos.dx - fingerSize - rowWidth;
+          canvas.translate(px, py);
+          final rect = RRect.fromRectAndRadius(
+            Offset.zero & Size(max(rowWidth, panelWidth), 24),
+            Radius.circular(8),
+          );
+          canvas.drawRRect(rect, Paint()..color = Colors.black87);
+
+          final labelY =
+              yGap + (rowHeight - labels[i].height) / 2; // vertical center
+          labels[i].paint(canvas, Offset(xGap, labelY));
+
+          // Draw values (right align, vertical center)
+          final valueY =
+              yGap + (rowHeight - values[i].height) / 2; // vertical center
+          values[i].paint(
+            canvas,
+            Offset(rect.width - values[i].width - xGap, valueY),
+          );
+
+          canvas.restore();
+        }
+      }
+    }
+  }
+
+  /// [below] indicates prefer putting below overlapped item, auto placement if null
+  double getEmptySpace(double y, double height, bool? below) {
+    for (int j = 0; j < occupied.length; j += 2) {
+      double top1 = y;
+      double bottom1 = top1 + height;
+      double top2 = occupied[j];
+      double bottom2 = top2 + occupied[j + 1];
+      if (!(bottom1 < top2 || top1 > bottom2)) {
+        // overlapped
+        double ry1 = (top2 - y).abs();
+        double ry2 = (bottom2 - y).abs();
+        if (below == null) {
+          if (ry2 >= ry1 && top2 - height > 0) {
+            return getEmptySpace(top2 - height - 1, height, false);
+          } else {
+            return getEmptySpace(bottom2 + 1, height, true);
+          }
+        } else if (below == true) {
+          return getEmptySpace(bottom2 + 1, height, true);
+        } else {
+          return getEmptySpace(top2 - height - 1, height, false);
+        }
+      }
+    }
+    //0046purple
+    // insert to occupied (sorted)
+    int j = 0;
+    for (j = 0; j < occupied.length; j += 2) {
+      if (occupied[j] >= y) break;
+    }
+    occupied.insertAll(j, [y, height]);
+    return y;
   }
 
   @override

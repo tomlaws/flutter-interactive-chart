@@ -1,11 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/widgets.dart';
+import 'package:interactive_chart/interactive_chart.dart';
+import 'package:interactive_chart/src/line.dart';
 
 import 'chart_style.dart';
 import 'candle_data.dart';
 
 class PainterParams {
   final List<CandleData> candles;
+  final List<List<double?>> additionalTrends;
+  final List<String> additionalTrendLabels;
+
   final ChartStyle style;
   final Size size;
   final double candleWidth;
@@ -20,22 +25,27 @@ class PainterParams {
   final Offset? tapPosition;
   final List<double?>? leadingTrends;
   final List<double?>? trailingTrends;
+  final List<double?>? leadingAdditionalTrends;
+  final List<double?>? trailingAdditionalTrends;
 
-  PainterParams({
-    required this.candles,
-    required this.style,
-    required this.size,
-    required this.candleWidth,
-    required this.startOffset,
-    required this.maxPrice,
-    required this.minPrice,
-    required this.maxVol,
-    required this.minVol,
-    required this.xShift,
-    required this.tapPosition,
-    required this.leadingTrends,
-    required this.trailingTrends,
-  });
+  PainterParams(
+      {required this.candles,
+      required this.additionalTrends,
+      required this.additionalTrendLabels,
+      required this.style,
+      required this.size,
+      required this.candleWidth,
+      required this.startOffset,
+      required this.maxPrice,
+      required this.minPrice,
+      required this.maxVol,
+      required this.minVol,
+      required this.xShift,
+      required this.tapPosition,
+      required this.leadingTrends,
+      required this.trailingTrends,
+      required this.leadingAdditionalTrends,
+      required this.trailingAdditionalTrends});
 
   double get chartWidth => // width without price labels
       size.width - style.priceLabelWidth;
@@ -59,7 +69,11 @@ class PainterParams {
   double fitVolume(double y) {
     final gap = 12; // the gap between price bars and volume bars
     final baseAmount = 2; // display at least "something" for the lowest volume
-    final volGridSize = (volumeHeight - baseAmount - gap) / (maxVol - minVol);
+    final diff = maxVol - minVol;
+    if (diff == 0) {
+      return priceHeight + volumeHeight * 0.25;
+    }
+    final volGridSize = (volumeHeight - baseAmount - gap) / diff;
     final vol = (y - minVol) * volGridSize;
     return volumeHeight - vol + priceHeight - baseAmount;
   }
@@ -69,6 +83,8 @@ class PainterParams {
         lerpDouble(getField(a), getField(b), t)!;
     return PainterParams(
       candles: b.candles,
+      additionalTrends: b.additionalTrends,
+      additionalTrendLabels: b.additionalTrendLabels,
       style: b.style,
       size: b.size,
       candleWidth: b.candleWidth,
@@ -81,6 +97,8 @@ class PainterParams {
       tapPosition: b.tapPosition,
       leadingTrends: b.leadingTrends,
       trailingTrends: b.trailingTrends,
+      leadingAdditionalTrends: b.leadingAdditionalTrends,
+      trailingAdditionalTrends: b.trailingAdditionalTrends,
     );
   }
 
@@ -101,6 +119,9 @@ class PainterParams {
 
     if (leadingTrends != other.leadingTrends ||
         trailingTrends != other.trailingTrends) return true;
+
+    if (leadingAdditionalTrends != other.leadingAdditionalTrends ||
+        trailingAdditionalTrends != other.trailingAdditionalTrends) return true;
 
     if (style != other.style) return true;
 
