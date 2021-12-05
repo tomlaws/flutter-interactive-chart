@@ -1,4 +1,6 @@
 //enum Subchart { rsi }
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'chart_painter.dart';
@@ -74,4 +76,20 @@ class SubchartRange {
       required this.pair,
       required this.min,
       required this.max});
+
+  SubchartRange lerp(SubchartRange another, t) {
+    return SubchartRange(
+        leading: another.leading,
+        trailing: another.trailing,
+        values: another.values,
+        colors: another.colors,
+        hist: another.hist,
+        pair: another.pair,
+        min: (min != null && another.min != null)
+            ? lerpDouble(min, another.min, t)
+            : another.min,
+        max: (max != null && another.max != null)
+            ? lerpDouble(max, another.max, t)
+            : another.max);
+  }
 }

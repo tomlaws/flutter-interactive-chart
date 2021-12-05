@@ -108,15 +108,28 @@ class PainterParams {
   static PainterParams lerp(PainterParams a, PainterParams b, double t) {
     double lerpField(double getField(PainterParams p)) =>
         lerpDouble(getField(a), getField(b), t)!;
+    List<List<SubchartRange>> lerpSubchart() {
+      List<List<SubchartRange>> l1 = [];
+      for (int i = 0; i < a.subcharts.length; i++) {
+        List<SubchartRange> l2 = [];
+        for (int j = 0; j < a.subcharts[i].length; j++) {
+          l2.add(a.subcharts[i][j].lerp(b.subcharts[i][j], t));
+        }
+        l1.add(l2);
+      }
+      return l1;
+    }
+
     return PainterParams(
       candles: b.candles,
       additionalTrends: b.additionalTrends,
       additionalTrendLabels: b.additionalTrendLabels,
-      subcharts: b.subcharts,
+      subcharts: lerpSubchart(),
       style: b.style,
       size: b.size,
       candleWidth: b.candleWidth,
       startOffset: b.startOffset,
+      // disable lerp for now
       maxPrice: lerpField((p) => p.maxPrice),
       minPrice: lerpField((p) => p.minPrice),
       maxVol: lerpField((p) => p.maxVol),

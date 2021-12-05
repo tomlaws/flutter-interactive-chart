@@ -258,7 +258,8 @@ class _InteractiveChartState extends State<InteractiveChart> {
             // subcharts
             List<List<SubchartRange>> subchartsInRange = [];
             for (int i = 0; i < widget.subcharts.length; ++i) {
-              subchartsInRange.add(widget.subcharts[i].getRange(start, end));
+              subchartsInRange.add(widget.subcharts[i].getRange(
+                  start, end < widget.candles.length ? end + 1 : end));
             }
 
             final child = TweenAnimationBuilder(

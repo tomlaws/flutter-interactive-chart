@@ -52,7 +52,7 @@ class ChartPainter extends CustomPainter {
 
     // Draw subcharts
     _drawSubcharts(canvas, params);
-
+    canvas.translate(params.xShift, 0);
     canvas.clipRect(Offset.zero &
         Size(params.chartWidth,
             params.subchartHeight * params.subcharts.length));
@@ -483,7 +483,7 @@ void _drawSubcharts(canvas, PainterParams params) {
       Offset.zero & Size(params.chartWidth, params.style.subchartHeight),
       Radius.zero,
     );
-    canvas.drawRRect(rect, Paint()..color = Colors.black12);
+    canvas.drawRRect(rect, Paint()..color = Colors.transparent);
 
     var subchart = params.subcharts[i];
     var pathFill = [];
@@ -501,7 +501,7 @@ void _drawSubcharts(canvas, PainterParams params) {
 
       // draw lines
       for (int k = 0; k < data.length; k++) {
-        final x = k * params.candleWidth;
+        final x = params.xShift + k * params.candleWidth;
         final pt = data.at(k);
         //
         if (hist) {
