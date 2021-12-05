@@ -57,7 +57,7 @@ class PainterParams {
       style.subchartHeight;
 
   double get subchartsHeight =>
-      (subcharts.length * (style.subchartHeight + chartSpacing));
+      chartSpacing + (subcharts.length * (style.subchartHeight));
 
   double get chartHeight => // height without time labels
       size.height - style.timeLabelHeight - subchartsHeight;

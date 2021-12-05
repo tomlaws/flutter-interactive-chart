@@ -464,6 +464,13 @@ class ChartPainter extends CustomPainter {
 void _drawSubcharts(canvas, PainterParams params) {
   for (int i = 0; i < params.subcharts.length; ++i) {
     canvas.save();
+    canvas.clipRect(Offset.zero &
+        Size(
+            params.chartWidth,
+            params.chartHeight +
+                params.style.timeLabelHeight +
+                params.chartSpacing +
+                params.subchartHeight * (i + 1)));
     // draw background
     canvas.translate(
         0,
@@ -600,7 +607,6 @@ void _drawSubcharts(canvas, PainterParams params) {
           ),
           paint2);
     }
-
     canvas.restore();
   }
 }
