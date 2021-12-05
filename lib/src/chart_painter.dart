@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:interactive_chart/src/indicator.dart';
+import 'package:collection/collection.dart';
+import 'package:interactive_chart/interactive_chart.dart';
 import 'package:collection/collection.dart';
 
 import 'candle_data.dart';
@@ -36,6 +37,7 @@ class ChartPainter extends CustomPainter {
     // Draw prices, volumes & trend line
     canvas.save();
     canvas.clipRect(Offset.zero & Size(params.chartWidth, params.chartHeight));
+
     // canvas.drawRect(
     //   // apply yellow tint to clipped area (for debugging)
     //   Offset.zero & Size(params.chartWidth, params.chartHeight),
@@ -47,12 +49,21 @@ class ChartPainter extends CustomPainter {
     }
     canvas.restore();
 
+    // Draw subcharts
+    _drawSubcharts(canvas, params);
+
+    canvas.clipRect(Offset.zero &
+        Size(params.chartWidth,
+            params.subchartHeight * params.subcharts.length));
+
+    canvas.restore();
     // Draw tap highlight & overlay
     if (params.tapPosition != null) {
       if (params.tapPosition!.dx < params.chartWidth) {
         _drawTapHighlightAndOverlay(canvas, params);
       }
     }
+    canvas.save();
   }
 
   void _drawTimeLabels(canvas, PainterParams params) {
@@ -253,7 +264,7 @@ class ChartPainter extends CustomPainter {
     // Draw highlight bar (selection box)
     canvas.drawLine(
         Offset(i * params.candleWidth, 0.0),
-        Offset(i * params.candleWidth, params.chartHeight),
+        Offset(i * params.candleWidth, params.chartsHeight),
         Paint()
           ..strokeWidth = max(params.candleWidth * 0.88, 1.0)
           ..color = params.style.selectionHighlightColor);
@@ -305,8 +316,10 @@ class ChartPainter extends CustomPainter {
 
     // Shift the canvas, so the overlay panel can appear near touch position.
     canvas.save();
-    final pos = params.tapPosition!;
-    final fingerSize = 32.0; // leave some margin around user's finger
+    final ref = params.tapPosition!;
+    final mid = ((candle.open ?? 0) + (candle.close ?? 0)) / 2;
+    final pos = Offset(ref.dx, params.fitPrice(mid));
+    final fingerSize = 30.0; // leave some margin around user's finger
     double dx, dy;
     assert(params.size.width >= panelWidth, "Overlay panel is too wide.");
     if (pos.dx <= params.size.width / 2) {
@@ -446,6 +459,150 @@ class ChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(ChartPainter oldDelegate) =>
       params.shouldRepaint(oldDelegate.params);
+}
+
+void _drawSubcharts(canvas, PainterParams params) {
+  for (int i = 0; i < params.subcharts.length; ++i) {
+    canvas.save();
+    // draw background
+    canvas.translate(
+        0,
+        params.chartHeight +
+            params.style.timeLabelHeight +
+            params.chartSpacing +
+            params.subchartHeight * i);
+    RRect rect = RRect.fromRectAndRadius(
+      Offset.zero & Size(params.chartWidth, params.style.subchartHeight),
+      Radius.zero,
+    );
+    canvas.drawRRect(rect, Paint()..color = Colors.black12);
+
+    var subchart = params.subcharts[i];
+    var pathFill = [];
+    var pathFillColor = [];
+    subchart.forEachIndexed((indexOfSubchart, range) {
+      var leading = range.leading;
+      var trailing = range.trailing;
+      var data = range.values;
+      var color = range.colors[indexOfSubchart];
+      var hist = range.hist.contains(indexOfSubchart);
+      var minValue = range.min;
+      var maxValue = range.max;
+
+      // draw lines
+      for (int j = 0; j < data.length; j++) {
+        final x = j * params.candleWidth;
+        final pt = data.at(j);
+        //
+        if (hist) {
+          final thickWidth = max(params.candleWidth * 0.8, 0.8);
+          if (pt != null) {
+            canvas.drawLine(
+                Offset(x, params.fitPriceForSubchart(0, maxValue, minValue)),
+                Offset(x, params.fitPriceForSubchart(pt, maxValue, minValue)),
+                Paint()
+                  ..strokeWidth = thickWidth
+                  ..color = color);
+          }
+          continue;
+        }
+        //
+        final paint = Paint()
+          ..strokeWidth = 1.0
+          ..strokeCap = StrokeCap.round
+          ..color = color;
+
+        final prevPt = data.at(j - 1);
+        if (pt != null && prevPt != null) {
+          canvas.drawLine(
+            Offset(x - params.candleWidth,
+                params.fitPriceForSubchart(prevPt, maxValue, minValue)),
+            Offset(x, params.fitPriceForSubchart(pt, maxValue, minValue)),
+            paint,
+          );
+        }
+        if (j == 0) {
+          // In the front, draw an extra line connecting to out-of-window data
+          if (pt != null && leading != null) {
+            canvas.drawLine(
+              Offset(x - params.candleWidth,
+                  params.fitPriceForSubchart(leading, maxValue, minValue)),
+              Offset(x, params.fitPriceForSubchart(pt, maxValue, minValue)),
+              paint,
+            );
+          }
+        } else if (j == data.length - 1) {
+          // At the end, draw an extra line connecting to out-of-window data
+          if (pt != null && trailing != null) {
+            canvas.drawLine(
+              Offset(x, params.fitPriceForSubchart(pt, maxValue, minValue)),
+              Offset(
+                x + params.candleWidth,
+                params.fitPriceForSubchart(trailing, maxValue, minValue),
+              ),
+              paint,
+            );
+          }
+        }
+      }
+
+      // fill pair
+      if (range.pair != null && range.pair!.contains(indexOfSubchart)) {
+        var data = range.values;
+        var path = Path();
+
+        path.moveTo(
+            0 - params.candleWidth, params.subchartHeight); // include leading
+        if (leading != null) {
+          path.lineTo(0 - params.candleWidth,
+              params.fitPriceForSubchart(leading, maxValue, minValue));
+        }
+        for (int j = 0; j < data.length; j++) {
+          final x = j * params.candleWidth;
+          final pt = data.at(j) ?? 0;
+          double y = params.fitPriceForSubchart(pt, maxValue, minValue);
+          path.lineTo(x, y);
+        }
+        if (trailing != null) {
+          path.lineTo(data.length * params.candleWidth,
+              params.fitPriceForSubchart(trailing, maxValue, minValue));
+          path.lineTo(data.length * params.candleWidth,
+              params.subchartHeight); // include trailing
+        } else {
+          path.lineTo((data.length - 1) * params.candleWidth,
+              params.subchartHeight); // include trailing
+        }
+        path.close();
+        pathFill.add(path);
+        pathFillColor.add(color);
+      }
+    });
+    if (pathFill.length == 2) {
+      final paint1 = Paint();
+      paint1.color = pathFillColor[0].withOpacity(.4);
+      paint1.style = PaintingStyle.fill;
+      canvas.drawPath(
+          Path.combine(
+            PathOperation.difference,
+            pathFill[0],
+            pathFill[1],
+          ),
+          paint1);
+
+      final paint2 = Paint();
+      paint2.color = pathFillColor[1].withOpacity(.4);
+      paint2.style = PaintingStyle.fill;
+      canvas.drawPath(
+          Path.combine(
+            PathOperation.difference,
+            pathFill[1],
+            pathFill[0],
+          ),
+          paint2);
+    }
+
+    canvas.restore();
+  }
 }
 
 extension ElementAtOrNull<E> on List<E> {

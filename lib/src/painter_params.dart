@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:interactive_chart/interactive_chart.dart';
-import 'package:interactive_chart/src/line.dart';
 
 import 'chart_style.dart';
 import 'candle_data.dart';
@@ -10,6 +9,7 @@ class PainterParams {
   final List<CandleData> candles;
   final List<List<double?>> additionalTrends;
   final List<String> additionalTrendLabels;
+  final List<List<SubchartRange>> subcharts;
 
   final ChartStyle style;
   final Size size;
@@ -32,6 +32,7 @@ class PainterParams {
       {required this.candles,
       required this.additionalTrends,
       required this.additionalTrendLabels,
+      required this.subcharts,
       required this.style,
       required this.size,
       required this.candleWidth,
@@ -50,12 +51,23 @@ class PainterParams {
   double get chartWidth => // width without price labels
       size.width - style.priceLabelWidth;
 
+  double get chartSpacing => 4;
+
+  double get subchartHeight => // height without time labels
+      style.subchartHeight;
+
+  double get subchartsHeight =>
+      (subcharts.length * (style.subchartHeight + chartSpacing));
+
   double get chartHeight => // height without time labels
-      size.height - style.timeLabelHeight;
+      size.height - style.timeLabelHeight - subchartsHeight;
 
   double get volumeHeight => chartHeight * style.volumeHeightFactor;
 
   double get priceHeight => chartHeight - volumeHeight;
+
+  double get chartsHeight =>
+      subchartsHeight + chartHeight + style.timeLabelHeight;
 
   int getCandleIndexFromOffset(double x) {
     final adjustedPos = x - xShift + candleWidth / 2;
@@ -65,6 +77,9 @@ class PainterParams {
 
   double fitPrice(double y) =>
       priceHeight * (maxPrice - y) / (maxPrice - minPrice);
+
+  double fitPriceForSubchart(double y, double max, double min) =>
+      subchartHeight * (max - y) / (max - min);
 
   double fitVolume(double y) {
     final gap = 12; // the gap between price bars and volume bars
@@ -78,6 +93,18 @@ class PainterParams {
     return volumeHeight - vol + priceHeight - baseAmount;
   }
 
+  /// two sides +/-
+  double fitVolumeForSubchart(double y, double max, double min, double height) {
+    final baseAmount = 4; // double
+    var diff = max - min;
+    if (diff == 0) {
+      diff = 1;
+    }
+    final volGridSize = (height * 2 - baseAmount) / diff;
+    final vol = (y - 0) * volGridSize;
+    return vol + height;
+  }
+
   static PainterParams lerp(PainterParams a, PainterParams b, double t) {
     double lerpField(double getField(PainterParams p)) =>
         lerpDouble(getField(a), getField(b), t)!;
@@ -85,6 +112,7 @@ class PainterParams {
       candles: b.candles,
       additionalTrends: b.additionalTrends,
       additionalTrendLabels: b.additionalTrendLabels,
+      subcharts: b.subcharts,
       style: b.style,
       size: b.size,
       candleWidth: b.candleWidth,
@@ -124,6 +152,8 @@ class PainterParams {
         trailingAdditionalTrends != other.trailingAdditionalTrends) return true;
 
     if (style != other.style) return true;
+
+    if (subcharts != other.subcharts) return true;
 
     return false;
   }

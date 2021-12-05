@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:interactive_chart/src/subchart.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:collection/collection.dart';
 
@@ -10,7 +11,7 @@ import 'candle_data.dart';
 import 'chart_painter.dart';
 import 'chart_style.dart';
 import 'indicator.dart';
-import 'line.dart';
+
 import 'painter_params.dart';
 
 class InteractiveChart extends StatefulWidget {
@@ -22,6 +23,7 @@ class InteractiveChart extends StatefulWidget {
   /// and allow users to freely zoom and pan however they like.
   final List<CandleData> candles;
   final Indicator? indicator;
+  final List<Subchart> subcharts;
 
   /// The default number of data points to be displayed when the chart is first
   /// opened. The default value is 90. If [CandleData] does not have enough data
@@ -69,6 +71,7 @@ class InteractiveChart extends StatefulWidget {
     Key? key,
     required this.candles,
     this.indicator,
+    this.subcharts = const [],
     this.initialVisibleCandleCount = 90,
     ChartStyle? style,
     this.timeLabel,
@@ -252,12 +255,19 @@ class _InteractiveChartState extends State<InteractiveChart> {
                 .whereType<double>()
                 .reduce(min);
 
+            // subcharts
+            List<List<SubchartRange>> subchartsInRange = [];
+            for (int i = 0; i < widget.subcharts.length; ++i) {
+              subchartsInRange.add(widget.subcharts[i].getRange(start, end));
+            }
+
             final child = TweenAnimationBuilder(
               tween: PainterParamsTween(
                 end: PainterParams(
                     candles: candlesInRange,
                     additionalTrends: additionalTrendsInRange,
                     additionalTrendLabels: additionalTrendLabels,
+                    subcharts: subchartsInRange,
                     style: widget.style,
                     size: size,
                     candleWidth: _candleWidth,

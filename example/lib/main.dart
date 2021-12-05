@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> {
     _initializing = true;
     await _update();
     _initializing = false;
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _update();
     });
   }
@@ -235,6 +235,10 @@ class _MyAppState extends State<MyApp> {
                           /** Only [candles] is required */
                           candles: _candleData,
                           indicator: _indicator,
+                          subcharts: [
+                            Subchart.rsi(_candleData),
+                            Subchart.macd(_candleData)
+                          ],
                           initialVisibleCandleCount: 4 * 60,
                           /** Uncomment the following for examples on optional parameters */
 

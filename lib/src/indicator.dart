@@ -1,5 +1,3 @@
-import 'package:collection/collection.dart';
-
 enum Indicator { SMA, WMA, EMA, Bollinger, SAR }
 
 extension IndicatorExtension on Indicator {

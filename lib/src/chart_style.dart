@@ -17,6 +17,8 @@ class ChartStyle {
   /// the chart and the date/time labels.
   final double timeLabelHeight;
 
+  final double subchartHeight;
+
   /// The style of date/time labels (on the bottom of the chart).
   final TextStyle timeLabelStyle;
 
@@ -61,6 +63,7 @@ class ChartStyle {
     this.volumeHeightFactor = 0.2,
     this.priceLabelWidth = 48.0,
     this.timeLabelHeight = 24.0,
+    this.subchartHeight = 128.0,
     this.timeLabelStyle = const TextStyle(
       fontSize: 16,
       color: Colors.grey,
