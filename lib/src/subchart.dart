@@ -36,8 +36,12 @@ class Subchart {
 
   List<SubchartRange> getRange(int start, int end) {
     var flat = data.expand((i) => i.getRange(start, end).toList()).toList();
-    var maxValue = flat.map((v) => v).whereType<double>().reduce(max);
-    var minValue = flat.map((v) => v).whereType<double>().reduce(min);
+    double? maxValue;
+    double? minValue;
+    try {
+      maxValue = flat.map((v) => v).whereType<double>().reduce(max);
+      minValue = flat.map((v) => v).whereType<double>().reduce(min);
+    } catch (ex) {}
     return data
         .map((e) => SubchartRange(
             colors: colors,
@@ -59,8 +63,8 @@ class SubchartRange {
   final List<Color> colors;
   final List<int?> hist; //histogram
   final List<int>? pair;
-  final double min;
-  final double max;
+  final double? min;
+  final double? max;
   SubchartRange(
       {required this.leading,
       required this.trailing,

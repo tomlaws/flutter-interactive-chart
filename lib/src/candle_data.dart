@@ -189,8 +189,12 @@ class CandleData {
   }
 
   static List<double?> computeRSI(List<CandleData> data, int inTimePeriod) {
-    final outReal = _rsi(data.map((e) => e.close).toList(), inTimePeriod);
-    return outReal;
+    try {
+      final outReal = _rsi(data.map((e) => e.close).toList(), inTimePeriod);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
   }
 
   static List<List<double?>> _macd(List<double?> inReal, int inFastPeriod,

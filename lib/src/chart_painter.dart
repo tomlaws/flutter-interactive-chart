@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -487,19 +488,21 @@ void _drawSubcharts(canvas, PainterParams params) {
     var subchart = params.subcharts[i];
     var pathFill = [];
     var pathFillColor = [];
-    subchart.forEachIndexed((indexOfSubchart, range) {
+    for (int j = 0; j < subchart.length; ++j) {
+      var range = subchart[j];
       var leading = range.leading;
       var trailing = range.trailing;
       var data = range.values;
-      var color = range.colors[indexOfSubchart];
-      var hist = range.hist.contains(indexOfSubchart);
+      var color = range.colors[j];
+      var hist = range.hist.contains(j);
       var minValue = range.min;
       var maxValue = range.max;
+      if (minValue == null || maxValue == null) continue;
 
       // draw lines
-      for (int j = 0; j < data.length; j++) {
-        final x = j * params.candleWidth;
-        final pt = data.at(j);
+      for (int k = 0; k < data.length; k++) {
+        final x = k * params.candleWidth;
+        final pt = data.at(k);
         //
         if (hist) {
           final thickWidth = max(params.candleWidth * 0.8, 0.8);
@@ -519,7 +522,7 @@ void _drawSubcharts(canvas, PainterParams params) {
           ..strokeCap = StrokeCap.round
           ..color = color;
 
-        final prevPt = data.at(j - 1);
+        final prevPt = data.at(k - 1);
         if (pt != null && prevPt != null) {
           canvas.drawLine(
             Offset(x - params.candleWidth,
@@ -528,7 +531,7 @@ void _drawSubcharts(canvas, PainterParams params) {
             paint,
           );
         }
-        if (j == 0) {
+        if (k == 0) {
           // In the front, draw an extra line connecting to out-of-window data
           if (pt != null && leading != null) {
             canvas.drawLine(
@@ -538,7 +541,7 @@ void _drawSubcharts(canvas, PainterParams params) {
               paint,
             );
           }
-        } else if (j == data.length - 1) {
+        } else if (k == data.length - 1) {
           // At the end, draw an extra line connecting to out-of-window data
           if (pt != null && trailing != null) {
             canvas.drawLine(
@@ -554,7 +557,7 @@ void _drawSubcharts(canvas, PainterParams params) {
       }
 
       // fill pair
-      if (range.pair != null && range.pair!.contains(indexOfSubchart)) {
+      if (range.pair != null && range.pair!.contains(j)) {
         var data = range.values;
         var path = Path();
 
@@ -583,7 +586,7 @@ void _drawSubcharts(canvas, PainterParams params) {
         pathFill.add(path);
         pathFillColor.add(color);
       }
-    });
+    }
     if (pathFill.length == 2) {
       final paint1 = Paint();
       paint1.color = pathFillColor[0].withOpacity(.4);
