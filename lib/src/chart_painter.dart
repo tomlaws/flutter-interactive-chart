@@ -561,25 +561,25 @@ void _drawSubcharts(canvas, PainterParams params) {
         var data = range.values;
         var path = Path();
 
-        path.moveTo(
-            0 - params.candleWidth, params.subchartHeight); // include leading
+        path.moveTo(params.xShift + 0 - params.candleWidth,
+            params.subchartHeight); // include leading
         if (leading != null) {
-          path.lineTo(0 - params.candleWidth,
+          path.lineTo(params.xShift + 0 - params.candleWidth,
               params.fitPriceForSubchart(leading, maxValue, minValue));
         }
         for (int j = 0; j < data.length; j++) {
-          final x = j * params.candleWidth;
+          final x = params.xShift + j * params.candleWidth;
           final pt = data.at(j) ?? 0;
           double y = params.fitPriceForSubchart(pt, maxValue, minValue);
           path.lineTo(x, y);
         }
         if (trailing != null) {
-          path.lineTo(data.length * params.candleWidth,
+          path.lineTo(params.xShift + data.length * params.candleWidth,
               params.fitPriceForSubchart(trailing, maxValue, minValue));
-          path.lineTo(data.length * params.candleWidth,
+          path.lineTo(params.xShift + data.length * params.candleWidth,
               params.subchartHeight); // include trailing
         } else {
-          path.lineTo((data.length - 1) * params.candleWidth,
+          path.lineTo(params.xShift + (data.length - 1) * params.candleWidth,
               params.subchartHeight); // include trailing
         }
         path.close();
