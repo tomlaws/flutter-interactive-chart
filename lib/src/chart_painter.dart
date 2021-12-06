@@ -32,7 +32,8 @@ class ChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     occupied = [];
     // Draw time labels (dates) & price labels
-    _drawTimeLabels(canvas, params);
+    //_drawTimeLabels2(canvas, params);
+    _drawTimeLabels2(canvas, params);
     _drawPriceGridAndLabels(canvas, params);
 
     // Draw prices, volumes & trend line
@@ -65,6 +66,44 @@ class ChartPainter extends CustomPainter {
       }
     }
     canvas.save();
+  }
+
+  void _drawTimeLabels2(canvas, PainterParams params) {
+    // attemp to put labels right below the candle sticks
+    final lineCount = params.candles.length;
+    List<TextPainter> painters = [];
+    for (int i = 0; i < lineCount; i++) {
+      double x = i * params.candleWidth;
+      final index = params.getCandleIndexFromOffset(x);
+      if (index < params.candles.length) {
+        final candle = params.candles[index];
+        final visibleDataCount = params.candles.length;
+        final text = getTimeLabel(candle.timestamp, visibleDataCount);
+        final timeTp = TextPainter(
+          text: TextSpan(
+            text: text,
+            style: params.style.timeLabelStyle,
+          ),
+        )
+          ..textDirection = TextDirection.ltr
+          ..layout();
+        painters.add(timeTp);
+      }
+    }
+    var maxLabelWidth = painters.map((e) => e.width).reduce(max);
+    // at least two times bigger
+    if (maxLabelWidth * 2 <= params.candleWidth)
+      for (int i = 0; i < painters.length; ++i) {
+        var timeTp = painters[i];
+        final topPadding = params.style.timeLabelHeight - timeTp.height;
+        double x = i * params.candleWidth + params.xShift;
+        timeTp.paint(
+          canvas,
+          Offset(x - timeTp.width / 2, params.chartHeight + topPadding),
+        );
+      }
+    else
+      return _drawTimeLabels(canvas, params);
   }
 
   void _drawTimeLabels(canvas, PainterParams params) {
@@ -493,16 +532,20 @@ void _drawSubcharts(canvas, PainterParams params) {
       var leading = range.leading;
       var trailing = range.trailing;
       var data = range.values;
-      var color = range.colors[j];
+      var color = range.colors.at(j) ?? Colors.transparent;
       var hist = range.hist.contains(j);
       var minValue = range.min;
       var maxValue = range.max;
-      if (minValue == null || maxValue == null) continue;
+      if (minValue == null ||
+          maxValue == null ||
+          minValue.isNaN ||
+          maxValue.isNaN) continue;
 
       // draw lines
       for (int k = 0; k < data.length; k++) {
         final x = params.xShift + k * params.candleWidth;
         final pt = data.at(k);
+        if (pt == null || pt.isNaN) continue;
         //
         if (hist) {
           final thickWidth = max(params.candleWidth * 0.8, 0.8);

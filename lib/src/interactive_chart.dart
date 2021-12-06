@@ -242,10 +242,24 @@ class _InteractiveChartState extends State<InteractiveChart> {
               return c.open ?? c.close;
             }
 
-            final maxPrice =
+            var maxPrice =
                 candlesInRange.map(highest).whereType<double>().reduce(max);
-            final minPrice =
+            var minPrice =
                 candlesInRange.map(lowest).whereType<double>().reduce(min);
+
+            // fix max min by additional trends
+            if (additionalTrendsInRange.length > 0) {
+              for (int i = 0; i < additionalTrendsInRange.length; i++) {
+                var t = additionalTrendsInRange[i];
+                t.forEach((element) {
+                  if (element != null) {
+                    maxPrice = max(element, maxPrice);
+                    minPrice = min(element, minPrice);
+                  }
+                });
+              }
+            }
+
             final maxVol = candlesInRange
                 .map((c) => c.volume)
                 .whereType<double>()

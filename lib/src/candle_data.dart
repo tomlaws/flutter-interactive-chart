@@ -72,41 +72,41 @@ class CandleData {
   }
 
   static List<double?> _ema(List<double?> inReal, int inTimePeriod, double k1) {
-    try {
-      List<double?> outReal = List<double?>.filled(inReal.length, null);
-      int lookbackTotal = inTimePeriod - 1;
-      int startIdx = lookbackTotal;
-      int today = startIdx - lookbackTotal;
-      int i = inTimePeriod;
-      double tempReal = 0.0;
-      for (; i > 0;) {
-        tempReal += inReal.elementAt(today) ?? 0.0;
-        today++;
-        i--;
-      }
-      double prevMA = tempReal / inTimePeriod;
-      for (; today <= startIdx;) {
-        prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
-        today++;
-      }
-      outReal[startIdx] = prevMA;
-      var outIdx = startIdx + 1;
-      for (; today < inReal.length;) {
-        prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
-        outReal[outIdx] = prevMA;
-        today++;
-        outIdx++;
-      }
-      return outReal;
-    } catch (ex) {
-      return List.filled(inReal.length, null);
+    List<double?> outReal = List<double?>.filled(inReal.length, null);
+    int lookbackTotal = inTimePeriod - 1;
+    int startIdx = lookbackTotal;
+    int today = startIdx - lookbackTotal;
+    int i = inTimePeriod;
+    double tempReal = 0.0;
+    for (; i > 0;) {
+      tempReal += inReal.elementAt(today) ?? 0.0;
+      today++;
+      i--;
     }
+    double prevMA = tempReal / inTimePeriod;
+    for (; today <= startIdx;) {
+      prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
+      today++;
+    }
+    outReal[startIdx] = prevMA;
+    var outIdx = startIdx + 1;
+    for (; today < inReal.length;) {
+      prevMA = (((inReal.elementAt(today) ?? 0) - prevMA) * k1) + prevMA;
+      outReal[outIdx] = prevMA;
+      today++;
+      outIdx++;
+    }
+    return outReal;
   }
 
   static List<double?> computeEMA(List<CandleData> data, int inTimePeriod) {
-    final k = 2.0 / (inTimePeriod + 1);
-    final outReal = _ema(data.map((e) => e.close).toList(), inTimePeriod, k);
-    return outReal;
+    try {
+      final k = 2.0 / (inTimePeriod + 1);
+      final outReal = _ema(data.map((e) => e.close).toList(), inTimePeriod, k);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
   }
 
   static List<double?> _rsi(List inReal, int inTimePeriod) {
@@ -249,9 +249,17 @@ class CandleData {
 
   static List<List<double?>> computeMACD(List<CandleData> data,
       int inFastPeriod, int inSlowPeriod, int inSignalPeriod) {
-    final outReal = _macd(data.map((e) => e.close).toList(), inFastPeriod,
-        inSlowPeriod, inSignalPeriod);
-    return outReal;
+    try {
+      final outReal = _macd(data.map((e) => e.close).toList(), inFastPeriod,
+          inSlowPeriod, inSignalPeriod);
+      return outReal;
+    } catch (ex) {
+      return [
+        List.filled(data.length, null),
+        List.filled(data.length, null),
+        List.filled(data.length, null)
+      ];
+    }
   }
 
   @override
