@@ -9,7 +9,7 @@ class PainterParams {
   final List<CandleData> candles;
   final List<List<double?>> additionalTrends;
   final List<String> additionalTrendLabels;
-  final List<List<SubchartRange>> subcharts;
+  final List<SubchartRange> subcharts;
 
   final ChartStyle style;
   final Size size;
@@ -108,23 +108,23 @@ class PainterParams {
   static PainterParams lerp(PainterParams a, PainterParams b, double t) {
     double lerpField(double getField(PainterParams p)) =>
         lerpDouble(getField(a), getField(b), t)!;
-    List<List<SubchartRange>> lerpSubchart() {
-      List<List<SubchartRange>> l1 = [];
-      for (int i = 0; i < a.subcharts.length; i++) {
-        List<SubchartRange> l2 = [];
-        for (int j = 0; j < a.subcharts[i].length; j++) {
-          l2.add(a.subcharts[i][j].lerp(b.subcharts[i][j], t));
-        }
-        l1.add(l2);
-      }
-      return l1;
-    }
+    // List<List<SubchartRange>> lerpSubchart() {
+    //   List<List<SubchartRange>> l1 = [];
+    //   for (int i = 0; i < a.subcharts.length; i++) {
+    //     List<SubchartRange> l2 = [];
+    //     for (int j = 0; j < a.subcharts[i].length; j++) {
+    //       l2.add(a.subcharts[i][j].lerp(b.subcharts[i][j], t));
+    //     }
+    //     l1.add(l2);
+    //   }
+    //   return l1;
+    // }
 
     return PainterParams(
       candles: b.candles,
       additionalTrends: b.additionalTrends,
       additionalTrendLabels: b.additionalTrendLabels,
-      subcharts: lerpSubchart(),
+      subcharts: b.subcharts,
       style: b.style,
       size: b.size,
       candleWidth: b.candleWidth,

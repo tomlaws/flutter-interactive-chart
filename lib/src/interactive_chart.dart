@@ -270,7 +270,7 @@ class _InteractiveChartState extends State<InteractiveChart> {
                 .reduce(min);
 
             // subcharts
-            List<List<SubchartRange>> subchartsInRange = [];
+            List<SubchartRange> subchartsInRange = [];
             for (int i = 0; i < widget.subcharts.length; ++i) {
               subchartsInRange.add(widget.subcharts[i].getRange(
                   start, end < widget.candles.length ? end + 1 : end));
@@ -476,7 +476,7 @@ extension Formatting on double {
   }
 
   String asAbbreviated() {
-    if (this < 1000) return this.toStringAsFixed(3);
+    if (this < 1000) return double.parse(this.toStringAsFixed(3)).toString();
     if (this >= 1e18) return this.toStringAsExponential(3);
     final s = intl.NumberFormat("#,###", "en_US").format(this).split(",");
     const suffixes = ["K", "M", "B", "T", "Q"];

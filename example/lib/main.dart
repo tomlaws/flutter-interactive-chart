@@ -295,10 +295,10 @@ class _MyAppState extends State<MyApp> {
                                               ? '月份'
                                               : '年份':
                                   _formatTimestamp(candle.timestamp),
-                              "開": candle.open?.toStringAsFixed(2) ?? "-",
-                              "高": candle.high?.toStringAsFixed(2) ?? "-",
-                              "低": candle.low?.toStringAsFixed(2) ?? "-",
-                              "收": candle.close?.toStringAsFixed(2) ?? "-",
+                              "開": candle.open?.toString() ?? "-",
+                              "高": candle.high?.toString() ?? "-",
+                              "低": candle.low?.toString() ?? "-",
+                              "收": candle.close?.toString() ?? "-",
                               "成量": candle.volume?.asAbbreviated() ?? "-",
                             };
                           },
