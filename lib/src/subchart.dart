@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:interactive_chart/interactive_chart.dart';
 import 'chart_painter.dart';
+import 'package:collection/collection.dart';
 import 'dart:math';
 
 class Subchart {
@@ -94,8 +95,9 @@ class SubchartRange {
       required this.max,
       required this.info});
 
-  double yForOverlay(int index) {
+  double? yForOverlay(int index) {
     var filtered = values.map((e) => e.at(index)).whereType<double>();
+    if (filtered.length == 0) return null;
     var sum = filtered.reduce((a, b) => a + b);
     return sum / filtered.length;
   }

@@ -378,8 +378,9 @@ class ChartPainter extends CustomPainter {
 
       if (baseY < 0) baseY = 0.0;
 
-      var py = params.fitPriceForSubchart(
-              chart.yForOverlay(i), chart.max!, chart.min!) -
+      var price = chart.yForOverlay(i);
+      if (price == null) continue;
+      var py = params.fitPriceForSubchart(price, chart.max!, chart.min!) -
           labelMaxHeight / 2;
       py = py.clamp(0, params.subchartHeight - panelHeight);
       RRect panelRect = RRect.fromRectAndRadius(
