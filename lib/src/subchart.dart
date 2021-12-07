@@ -96,7 +96,7 @@ class SubchartRange {
       required this.info});
 
   double? yForOverlay(int index) {
-    var filtered = values.map((e) => e.at(index)).whereType<double>();
+    var filtered = values.map((e) => e.at(index)).whereNotNull().toList();
     if (filtered.length == 0) return null;
     var sum = filtered.reduce((a, b) => a + b);
     return sum / filtered.length;
