@@ -1,5 +1,5 @@
 # interactive_chart
-
+[For SharpPoint]
 A candlestick chart that supports pinch-to-zoom and panning.
 
 ## Dark mode
