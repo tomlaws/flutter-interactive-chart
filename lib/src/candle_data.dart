@@ -240,6 +240,9 @@ class CandleData {
       final outMACDSignalElt = outMACDSignal.elementAt(i) ?? 0.0;
       outMACDHist[i] = outMacdElt - outMACDSignalElt;
     }
+    if (outMACDSignal.length != inReal.length) {
+      throw new Error();
+    }
     return [
       outMACDHist,
       outMACD,
@@ -252,6 +255,7 @@ class CandleData {
     try {
       final outReal = _macd(data.map((e) => e.close).toList(), inFastPeriod,
           inSlowPeriod, inSignalPeriod);
+
       return outReal;
     } catch (ex) {
       return [
