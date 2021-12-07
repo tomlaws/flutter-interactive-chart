@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:interactive_chart/src/subchart.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:collection/collection.dart';
+import 'package:intl/intl.dart';
 
 import 'candle_data.dart';
 import 'chart_painter.dart';
@@ -24,6 +25,7 @@ class InteractiveChart extends StatefulWidget {
   final List<CandleData> candles;
   final Indicator? indicator;
   final List<Subchart> subcharts;
+  final int period;
 
   /// The default number of data points to be displayed when the chart is first
   /// opened. The default value is 90. If [CandleData] does not have enough data
@@ -72,6 +74,7 @@ class InteractiveChart extends StatefulWidget {
     required this.candles,
     this.indicator,
     this.subcharts = const [],
+    required this.period,
     this.initialVisibleCandleCount = 90,
     ChartStyle? style,
     this.timeLabel,
@@ -428,6 +431,7 @@ class _InteractiveChartState extends State<InteractiveChart> {
   }
 
   String defaultTimeLabel(int timestamp, int visibleDataCount) {
+    return _formatTimestamp(timestamp);
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp)
         .toIso8601String()
         .split("T")
@@ -445,7 +449,50 @@ class _InteractiveChartState extends State<InteractiveChart> {
 
   String defaultPriceLabel(double price) => price.toStringAsFixed(2);
 
+  _formatTimestamp(int timestamp) {
+    if (widget.period < 86400)
+      return new DateFormat('HH:mm')
+          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+    else if (widget.period < 2592000)
+      return new DateFormat('dd/MM')
+          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+    else if (widget.period < 31556926)
+      return new DateFormat('MM')
+          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+    else
+      return new DateFormat('yyyy')
+          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+  }
+
   Map<String, String> defaultOverlayInfo(CandleData candle) {
+    return {
+      if (widget.period < 2592000)
+        '日期': new DateFormat('dd/MM')
+            .format(DateTime.fromMillisecondsSinceEpoch(candle.timestamp)),
+      if (widget.period < 86400)
+        '時間': _formatTimestamp(candle.timestamp)
+      else if (widget.period >= 31556926)
+        '年份': _formatTimestamp(candle.timestamp)
+      else if (widget.period >= 2592000)
+        '月份': _formatTimestamp(candle.timestamp),
+      if (widget.period >= 86400) '': '',
+      // '': '',
+      // else if (widget.period < 2592000)
+      //   '': ''
+      // else if (widget.period < 2592000)
+      // widget.period < 86400
+      //     ? '時間'
+      //     : widget.period < 2592000
+      //         ? '日期'
+      //         : widget.period < 31556926
+      //             ? '月份'
+      //             : '年份': _formatTimestamp(candle.timestamp),
+      "開": candle.open?.toString() ?? "-",
+      "高": candle.high?.toString() ?? "-",
+      "低": candle.low?.toString() ?? "-",
+      "收": candle.close?.toString() ?? "-",
+      "成量": candle.volume?.asAbbreviated() ?? "-",
+    };
     final date = intl.DateFormat.yMMMd()
         .format(DateTime.fromMillisecondsSinceEpoch(candle.timestamp));
     return {

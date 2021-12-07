@@ -233,6 +233,7 @@ class _MyAppState extends State<MyApp> {
                       ? SizedBox()
                       : InteractiveChart(
                           /** Only [candles] is required */
+                          period: _period,
                           candles: _candleData,
                           indicator: _indicator,
                           subcharts: [
@@ -281,31 +282,10 @@ class _MyAppState extends State<MyApp> {
                             // overlayTextStyle: TextStyle(color: Colors.red[100]),
                             // timeLabelHeight: 32,
                           ),
-                          overlayInfo: (CandleData candle) {
-                            return {
-                              if (_period < 31556926)
-                                '日期': new DateFormat('dd/MM').format(
-                                    DateTime.fromMillisecondsSinceEpoch(
-                                        candle.timestamp)),
-                              _period < 86400
-                                      ? '時間'
-                                      : _period < 2592000
-                                          ? '日期'
-                                          : _period < 31556926
-                                              ? '月份'
-                                              : '年份':
-                                  _formatTimestamp(candle.timestamp),
-                              "開": candle.open?.toString() ?? "-",
-                              "高": candle.high?.toString() ?? "-",
-                              "低": candle.low?.toString() ?? "-",
-                              "收": candle.close?.toString() ?? "-",
-                              "成量": candle.volume?.asAbbreviated() ?? "-",
-                            };
-                          },
                           /** Customize axis labels */
-                          timeLabel: (timestamp, visibleDataCount) {
-                            return _formatTimestamp(timestamp);
-                          },
+                          // timeLabel: (timestamp, visibleDataCount) {
+                          //   return _formatTimestamp(timestamp);
+                          // },
                           // priceLabel: (price) => "${price.round()} 💎",
                           /** Customize overlay (tap and hold to see it)
                  ** Or return an empty object to disable overlay info. */
@@ -323,21 +303,6 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
-  }
-
-  _formatTimestamp(int timestamp) {
-    if (_period < 86400)
-      return new DateFormat('HH:mm')
-          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
-    else if (_period < 2592000)
-      return new DateFormat('dd/MM')
-          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
-    else if (_period < 31556926)
-      return new DateFormat('MM')
-          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
-    else
-      return new DateFormat('yy')
-          .format(DateTime.fromMillisecondsSinceEpoch(timestamp));
   }
 
   _computeTrendLines() {
