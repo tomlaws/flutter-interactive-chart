@@ -755,25 +755,24 @@ class ChartPainter extends CustomPainter {
       if (c.values.length == 0) continue;
       double? maxValue = c.max;
       double? minValue = c.min;
+      bool zeroLine = c.zeroLine;
       if (maxValue == null || minValue == null) continue;
-      [0.25, 0.75]
-          .map((v) => ((maxValue - minValue) * v) + minValue)
-          .forEach((y) {
-        var by = params.chartHeight +
-            params.style.timeLabelHeight +
-            params.chartSpacing +
-            params.subchartHeight * i;
+      var by = params.chartHeight +
+          params.style.timeLabelHeight +
+          params.chartSpacing +
+          params.subchartHeight * i;
+      if (zeroLine) {
         canvas.drawLine(
-          Offset(0, by + params.fitPriceForSubchart(y, maxValue, minValue)),
+          Offset(0, by + params.fitPriceForSubchart(0, maxValue, minValue)),
           Offset(params.chartWidth,
-              by + params.fitPriceForSubchart(y, maxValue, minValue)),
+              by + params.fitPriceForSubchart(0, maxValue, minValue)),
           Paint()
             ..strokeWidth = 0.5
             ..color = params.style.priceGridLineColor,
         );
         final priceTp = TextPainter(
           text: TextSpan(
-            text: getPriceLabel(y),
+            text: getPriceLabel(0),
             style: params.style.priceLabelStyle,
           ),
         )
@@ -784,10 +783,39 @@ class ChartPainter extends CustomPainter {
             Offset(
               params.chartWidth + 4,
               by +
-                  params.fitPriceForSubchart(y, maxValue, minValue) -
+                  params.fitPriceForSubchart(0, maxValue, minValue) -
                   priceTp.height / 2,
             ));
-      });
+      } else {
+        [0.25, 0.75]
+            .map((v) => ((maxValue - minValue) * v) + minValue)
+            .forEach((y) {
+          canvas.drawLine(
+            Offset(0, by + params.fitPriceForSubchart(y, maxValue, minValue)),
+            Offset(params.chartWidth,
+                by + params.fitPriceForSubchart(y, maxValue, minValue)),
+            Paint()
+              ..strokeWidth = 0.5
+              ..color = params.style.priceGridLineColor,
+          );
+          final priceTp = TextPainter(
+            text: TextSpan(
+              text: getPriceLabel(y),
+              style: params.style.priceLabelStyle,
+            ),
+          )
+            ..textDirection = TextDirection.ltr
+            ..layout();
+          priceTp.paint(
+              canvas,
+              Offset(
+                params.chartWidth + 4,
+                by +
+                    params.fitPriceForSubchart(y, maxValue, minValue) -
+                    priceTp.height / 2,
+              ));
+        });
+      }
     }
   }
 

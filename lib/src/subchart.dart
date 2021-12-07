@@ -15,12 +15,15 @@ class Subchart {
   final Map<String, String> Function(int index, List<List<double?>> values)
       info;
 
+  final bool zeroLine;
+
   Subchart._raw(
       {required this.data,
       required this.colors,
       required this.hist,
       required this.pair,
-      required this.info});
+      required this.info,
+      this.zeroLine = false});
 
   Subchart.rsi(List<CandleData> candles)
       : this._raw(
@@ -38,6 +41,7 @@ class Subchart {
               Colors.green,
               Colors.red,
             ],
+            zeroLine: true,
             data: CandleData.computeMACD(candles, 12, 26, 9),
             hist: [0],
             pair: [1, 2],
@@ -64,7 +68,8 @@ class Subchart {
         pair: pair,
         info: info,
         min: minValue,
-        max: maxValue);
+        max: maxValue,
+        zeroLine: zeroLine);
   }
 }
 
@@ -83,6 +88,7 @@ class SubchartRange {
   final double? max;
   final Map<String, String> Function(int index, List<List<double?>> values)
       info;
+  final bool zeroLine;
 
   SubchartRange(
       {required this.leading,
@@ -93,7 +99,8 @@ class SubchartRange {
       required this.pair,
       required this.min,
       required this.max,
-      required this.info});
+      required this.info,
+      required this.zeroLine});
 
   double? yForOverlay(int index) {
     var filtered = values.map((e) => e.at(index)).whereNotNull().toList();
@@ -116,6 +123,7 @@ class SubchartRange {
             : another.min,
         max: (max != null && another.max != null)
             ? lerpDouble(max, another.max, t)
-            : another.max);
+            : another.max,
+        zeroLine: zeroLine);
   }
 }
