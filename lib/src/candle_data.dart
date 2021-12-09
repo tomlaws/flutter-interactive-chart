@@ -266,6 +266,36 @@ class CandleData {
     }
   }
 
+  static List<double?> _roc(List<double?> inReal, int inTimePeriod) {
+    List<double?> outReal = List<double?>.filled(inReal.length, null);
+    final startIdx = inTimePeriod;
+    var outIdx = inTimePeriod;
+    var inIdx = startIdx;
+    var trailingIdx = startIdx - inTimePeriod;
+    for (; inIdx < inReal.length;) {
+      final tempReal = inReal.elementAt(trailingIdx);
+      if (tempReal == null || inReal.elementAt(inIdx) == null) continue;
+      if (tempReal != 0.0) {
+        outReal[outIdx] = ((inReal.elementAt(inIdx)! / tempReal) - 1.0) * 100.0;
+      } else {
+        outReal[outIdx] = 0.0;
+      }
+      trailingIdx++;
+      outIdx++;
+      inIdx++;
+    }
+    return outReal;
+  }
+
+  static List<double?> computeROC(List<CandleData> data, int inTimePeriod) {
+    try {
+      final outReal = _roc(data.map((e) => e.close).toList(), inTimePeriod);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
+  }
+
   @override
   String toString() => "<CandleData ($timestamp: $close)>";
 }

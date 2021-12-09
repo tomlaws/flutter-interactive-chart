@@ -237,6 +237,7 @@ class _MyAppState extends State<MyApp> {
                           candles: _candleData,
                           indicator: _indicator,
                           subcharts: [
+                            Subchart.roc(_candleData),
                             Subchart.rsi(_candleData),
                             Subchart.macd(_candleData)
                           ],

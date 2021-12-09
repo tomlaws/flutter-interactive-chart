@@ -25,6 +25,16 @@ class Subchart {
       required this.info,
       this.zeroLine = false});
 
+  Subchart.roc(List<CandleData> candles)
+      : this._raw(
+            colors: [Colors.blue.shade50],
+            data: [CandleData.computeROC(candles, 12)],
+            hist: [0],
+            pair: null,
+            zeroLine: true,
+            info: (i, values) =>
+                {'ROC (12):': values[0][i]?.toStringAsFixed(2) ?? '-'});
+
   Subchart.rsi(List<CandleData> candles)
       : this._raw(
             colors: [Colors.blue.shade50],
