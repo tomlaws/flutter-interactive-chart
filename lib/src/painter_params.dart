@@ -7,8 +7,7 @@ import 'candle_data.dart';
 
 class PainterParams {
   final List<CandleData> candles;
-  final List<List<double?>> additionalTrends;
-  final List<String> additionalTrendLabels;
+  final SubchartRange additionalChart;
   final List<SubchartRange> subcharts;
 
   final ChartStyle style;
@@ -25,28 +24,23 @@ class PainterParams {
   final Offset? tapPosition;
   final List<double?>? leadingTrends;
   final List<double?>? trailingTrends;
-  final List<double?>? leadingAdditionalTrends;
-  final List<double?>? trailingAdditionalTrends;
-
-  PainterParams(
-      {required this.candles,
-      required this.additionalTrends,
-      required this.additionalTrendLabels,
-      required this.subcharts,
-      required this.style,
-      required this.size,
-      required this.candleWidth,
-      required this.startOffset,
-      required this.maxPrice,
-      required this.minPrice,
-      required this.maxVol,
-      required this.minVol,
-      required this.xShift,
-      required this.tapPosition,
-      required this.leadingTrends,
-      required this.trailingTrends,
-      required this.leadingAdditionalTrends,
-      required this.trailingAdditionalTrends});
+  PainterParams({
+    required this.candles,
+    required this.additionalChart,
+    required this.subcharts,
+    required this.style,
+    required this.size,
+    required this.candleWidth,
+    required this.startOffset,
+    required this.maxPrice,
+    required this.minPrice,
+    required this.maxVol,
+    required this.minVol,
+    required this.xShift,
+    required this.tapPosition,
+    required this.leadingTrends,
+    required this.trailingTrends,
+  });
 
   double get chartWidth => // width without price labels
       size.width - style.priceLabelWidth;
@@ -126,8 +120,7 @@ class PainterParams {
 
     return PainterParams(
       candles: b.candles,
-      additionalTrends: b.additionalTrends,
-      additionalTrendLabels: b.additionalTrendLabels,
+      additionalChart: b.additionalChart,
       subcharts: b.subcharts,
       style: b.style,
       size: b.size,
@@ -142,8 +135,6 @@ class PainterParams {
       tapPosition: b.tapPosition,
       leadingTrends: b.leadingTrends,
       trailingTrends: b.trailingTrends,
-      leadingAdditionalTrends: b.leadingAdditionalTrends,
-      trailingAdditionalTrends: b.trailingAdditionalTrends,
     );
   }
 
@@ -165,8 +156,7 @@ class PainterParams {
     if (leadingTrends != other.leadingTrends ||
         trailingTrends != other.trailingTrends) return true;
 
-    if (leadingAdditionalTrends != other.leadingAdditionalTrends ||
-        trailingAdditionalTrends != other.trailingAdditionalTrends) return true;
+    if (additionalChart != other.additionalChart) return true;
 
     if (style != other.style) return true;
 

@@ -23,7 +23,7 @@ class InteractiveChart extends StatefulWidget {
   /// first opened (configurable with [initialVisibleCandleCount] parameter),
   /// and allow users to freely zoom and pan however they like.
   final List<CandleData> candles;
-  final Indicator? indicator;
+  final Subchart additionalChart;
   final List<Subchart> subcharts;
   final int period;
 
@@ -72,7 +72,7 @@ class InteractiveChart extends StatefulWidget {
   const InteractiveChart({
     Key? key,
     required this.candles,
-    this.indicator,
+    required this.additionalChart,
     this.subcharts = const [],
     required this.period,
     this.initialVisibleCandleCount = 90,
@@ -114,55 +114,56 @@ class _InteractiveChartState extends State<InteractiveChart> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> additionalTrendLabels = [];
-    List<List<double?>> additionalTrends = [];
-    List<int> periods = [5, 10, 20];
-    switch (widget.indicator) {
-      case Indicator.SMA:
-        var set = periods
-            .map((e) => CandleData.computeMA(widget.candles, e))
-            .toList();
-        for (int i = 0; i < widget.candles.length; ++i) {
-          additionalTrends.add(set.map((e) => e[i]).toList());
-        }
-        additionalTrendLabels = widget.indicator!.labels(periods);
-        break;
-      case Indicator.EMA:
-        var set = periods
-            .map((e) => CandleData.computeEMA(widget.candles, e))
-            .toList();
-        for (int i = 0; i < widget.candles.length; ++i) {
-          additionalTrends.add(set.map((e) => e[i]).toList());
-        }
-        additionalTrendLabels = widget.indicator!.labels(periods);
-        break;
-      default:
-        break;
-    }
+    // List<List<double?>> additionalTrends = [];
+    // for (int i = 0; i < widget.candles.length; ++i) {
+    //   additionalTrends
+    //       .add(widget.additionalChart!.data.map((e) => e[i]).toList());
+    // }
+    // List<int> periods = [5, 10, 20];
+    // switch (widget.indicator) {
+    //   case Indicator.SMA:
+    //     var set = periods
+    //         .map((e) => CandleData.computeMA(widget.candles, e))
+    //         .toList();
+    //     for (int i = 0; i < widget.candles.length; ++i) {
+    //       additionalTrends.add(set.map((e) => e[i]).toList());
+    //     }
+    //     break;
+    //   case Indicator.EMA:
+    //     var set = periods
+    //         .map((e) => CandleData.computeEMA(widget.candles, e))
+    //         .toList();
+    //     for (int i = 0; i < widget.candles.length; ++i) {
+    //       additionalTrends.add(set.map((e) => e[i]).toList());
+    //     }
+    //     break;
+    //   default:
+    //     break;
+    // }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (widget.indicator != null)
-        Wrap(
-          spacing: 8.0,
-          children: widget.indicator!
-              .labels(periods)
-              .mapIndexed((i, e) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                            color: widget.style.trendLineStyles[i].color),
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Text('$e')
-                    ],
-                  ))
-              .toList(),
-        ),
+      // if (widget.indicator != null)
+      //   Wrap(
+      //     spacing: 8.0,
+      //     children: widget.indicator!
+      //         .labels(periods)
+      //         .mapIndexed((i, e) => Row(
+      //               mainAxisSize: MainAxisSize.min,
+      //               crossAxisAlignment: CrossAxisAlignment.center,
+      //               children: [
+      //                 Container(
+      //                   width: 12,
+      //                   height: 12,
+      //                   decoration: BoxDecoration(
+      //                       color: widget.style.trendLineStyles[i].color),
+      //                 ),
+      //                 SizedBox(
+      //                   width: 8,
+      //                 ),
+      //                 Text('$e')
+      //               ],
+      //             ))
+      //         .toList(),
+      //   ),
       Container(
           margin: EdgeInsets.only(bottom: 16),
           width: double.infinity,
@@ -205,21 +206,19 @@ class _InteractiveChartState extends State<InteractiveChart> {
             final int count = (w / _candleWidth).ceil();
             final int end = (start + count).clamp(start, widget.candles.length);
             final candlesInRange = widget.candles.getRange(start, end).toList();
-            final additionalTrendsInRange =
-                additionalTrends.getRange(start, end).toList();
+            final additionalChartInRange = widget.additionalChart
+                .getRange(start, end < widget.candles.length ? end + 1 : end);
+
             if (end < widget.candles.length) {
               // Put in an extra item, since it can become visible when scrolling
               final nextItem = widget.candles[end];
               candlesInRange.add(nextItem);
-              additionalTrendsInRange.add(additionalTrends[end]);
             }
 
             // If possible, find neighbouring trend line data,
             // so the chart could draw better-connected lines
             final leadingTrends = widget.candles.at(start - 1)?.trends;
             final trailingTrends = widget.candles.at(end + 1)?.trends;
-            final leadingAdditionalTrends = additionalTrends.at(start - 1);
-            final trailingAdditionalTrends = additionalTrends.at(end + 1);
 
             // Find the horizontal shift needed when drawing the candles.
             // First, always shift the chart by half a candle, because when we
@@ -250,18 +249,9 @@ class _InteractiveChartState extends State<InteractiveChart> {
             var minPrice =
                 candlesInRange.map(lowest).whereType<double>().reduce(min);
 
-            // fix max min by additional trends
-            if (additionalTrendsInRange.length > 0) {
-              for (int i = 0; i < additionalTrendsInRange.length; i++) {
-                var t = additionalTrendsInRange[i];
-                t.forEach((element) {
-                  if (element != null) {
-                    maxPrice = max(element, maxPrice);
-                    minPrice = min(element, minPrice);
-                  }
-                });
-              }
-            }
+            // fix max min by additional chart
+            maxPrice = max(additionalChartInRange.max ?? maxPrice, maxPrice);
+            minPrice = min(additionalChartInRange.min ?? minPrice, minPrice);
 
             final maxVol = candlesInRange
                 .map((c) => c.volume)
@@ -282,24 +272,22 @@ class _InteractiveChartState extends State<InteractiveChart> {
             final child = TweenAnimationBuilder(
               tween: PainterParamsTween(
                 end: PainterParams(
-                    candles: candlesInRange,
-                    additionalTrends: additionalTrendsInRange,
-                    additionalTrendLabels: additionalTrendLabels,
-                    subcharts: subchartsInRange,
-                    style: widget.style,
-                    size: size,
-                    candleWidth: _candleWidth,
-                    startOffset: _startOffset,
-                    maxPrice: maxPrice,
-                    minPrice: minPrice,
-                    maxVol: maxVol,
-                    minVol: minVol,
-                    xShift: xShift,
-                    tapPosition: _tapPosition,
-                    leadingTrends: leadingTrends,
-                    trailingTrends: trailingTrends,
-                    leadingAdditionalTrends: leadingAdditionalTrends,
-                    trailingAdditionalTrends: trailingAdditionalTrends),
+                  candles: candlesInRange,
+                  additionalChart: additionalChartInRange,
+                  subcharts: subchartsInRange,
+                  style: widget.style,
+                  size: size,
+                  candleWidth: _candleWidth,
+                  startOffset: _startOffset,
+                  maxPrice: maxPrice,
+                  minPrice: minPrice,
+                  maxVol: maxVol,
+                  minVol: minVol,
+                  xShift: xShift,
+                  tapPosition: _tapPosition,
+                  leadingTrends: leadingTrends,
+                  trailingTrends: trailingTrends,
+                ),
               ),
               duration: Duration(milliseconds: 300),
               curve: Curves.easeOut,

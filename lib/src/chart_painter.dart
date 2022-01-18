@@ -166,7 +166,7 @@ class ChartPainter extends CustomPainter {
 
   void _drawSingleDay(canvas, PainterParams params, int i) {
     final candle = params.candles[i];
-    final additionalTrends = params.additionalTrends[i];
+    final additionalChart = params.additionalChart.values;
     final x = i * params.candleWidth;
     final thickWidth = max(params.candleWidth * 0.8, 0.8);
     final thinWidth = max(params.candleWidth * 0.2, 0.2);
@@ -254,15 +254,15 @@ class ChartPainter extends CustomPainter {
 
     // Draw additional trend line
     // Draw trend line
-    for (int j = 0; j < additionalTrends.length; j++) {
+    for (int j = 0; j < additionalChart.length; j++) {
       final trendLinePaint = params.style.trendLineStyles.at(j) ??
           (Paint()
             ..strokeWidth = 2.0
             ..strokeCap = StrokeCap.round
             ..color = Colors.blue);
 
-      final pt = additionalTrends.at(j); // current data point
-      final prevPt = params.additionalTrends.at(i - 1)?.at(j);
+      final pt = additionalChart[j].at(i); // current data point
+      final prevPt = additionalChart[j].at(i - 1);
       if (pt != null && prevPt != null) {
         canvas.drawLine(
           Offset(x - params.candleWidth, params.fitPrice(prevPt)),
@@ -272,22 +272,22 @@ class ChartPainter extends CustomPainter {
       }
       if (i == 0) {
         // In the front, draw an extra line connecting to out-of-window data
-        if (pt != null && params.leadingTrends?.at(j) != null) {
+        if (pt != null && params.additionalChart.leading[j] != null) {
           canvas.drawLine(
             Offset(x - params.candleWidth,
-                params.fitPrice(params.leadingTrends!.at(j)!)),
+                params.fitPrice(params.additionalChart.leading[j]!)),
             Offset(x, params.fitPrice(pt)),
             trendLinePaint,
           );
         }
       } else if (i == params.candles.length - 1) {
         // At the end, draw an extra line connecting to out-of-window data
-        if (pt != null && params.trailingTrends?.at(j) != null) {
+        if (pt != null && params.additionalChart.trailing[j] != null) {
           canvas.drawLine(
             Offset(x, params.fitPrice(pt)),
             Offset(
               x + params.candleWidth,
-              params.fitPrice(params.trailingTrends!.at(j)!),
+              params.fitPrice(params.additionalChart.trailing[j]!),
             ),
             trendLinePaint,
           );
@@ -299,7 +299,6 @@ class ChartPainter extends CustomPainter {
   void _drawTapHighlightAndOverlay(canvas, PainterParams params) {
     final pos = params.tapPosition!;
     final i = params.getCandleIndexFromOffset(pos.dx);
-    final candle = params.candles[i];
     canvas.save();
     canvas.translate(params.xShift, 0.0);
     // Draw highlight bar (selection box)
@@ -311,17 +310,17 @@ class ChartPainter extends CustomPainter {
           ..color = params.style.selectionHighlightColor);
     canvas.restore();
     // Draw info pane
-    final additionalTrends = params.additionalTrends[i];
-    _drawTapInfoOverlay(canvas, params, candle, additionalTrends);
+    final additionalChart = params.additionalChart;
+    _drawTapInfoOverlay(canvas, params, i);
 
     // Draw data points
     var px = params.xShift + i * params.candleWidth;
-    for (int i = 0; i < additionalTrends.length; i++) {
-      double? v = additionalTrends[i];
+    for (int j = 0; j < additionalChart.values.length; j++) {
+      double? v = additionalChart.values[j].at(i);
       if (v == null) continue;
       var py = params.fitPrice(v);
       canvas.drawCircle(Offset(px, py), 6,
-          Paint()..color = params.style.trendLineStyles[i].color);
+          Paint()..color = params.style.trendLineStyles[j].color);
     }
 
     // For subcharts
@@ -407,8 +406,7 @@ class ChartPainter extends CustomPainter {
     }
   }
 
-  void _drawTapInfoOverlay(canvas, PainterParams params, CandleData candle,
-      List<double?> additionalTrends) {
+  void _drawTapInfoOverlay(canvas, PainterParams params, int d) {
     final xGap = 8.0;
     final yGap = 4.0;
 
@@ -422,7 +420,7 @@ class ChartPainter extends CustomPainter {
         )
           ..textDirection = TextDirection.ltr
           ..layout();
-
+    final candle = params.candles[d];
     final info = getOverlayInfo(candle);
     if (info.isEmpty) return;
     final labels = info.keys.map((text) => makeTP(text)).toList();
@@ -510,18 +508,18 @@ class ChartPainter extends CustomPainter {
 
     canvas.restore();
 
-    if (additionalTrends.length > 0) {
-      final labels = params.additionalTrendLabels
-          .mapIndexed((i, text) =>
-              makeTP(text + ':', color: params.style.trendLineStyles[i].color))
+    var additionalChart = params.additionalChart;
+    if (additionalChart.values.length > 0) {
+      final info = additionalChart.info(d, additionalChart.values);
+      final labels = info.keys
+          .mapIndexed(
+              (i, t) => makeTP(t, color: params.style.trendLineStyles[i].color))
           .toList();
-      final values = additionalTrends
-          .map((text) => makeTP(text?.toStringAsFixed(2) ?? ''))
-          .toList();
+      final values = info.values.map((text) => makeTP(text)).toList();
       // Track occpuied
       occupied.addAll([dy, panelRect.bottom]);
-      for (int i = 0; i < additionalTrends.length; i++) {
-        double? v = additionalTrends[i];
+      for (int i = 0; i < additionalChart.values.length; i++) {
+        double? v = additionalChart.values[i].at(d);
         if (v != null) {
           canvas.save();
           var y = params.fitPrice(v);
@@ -766,11 +764,11 @@ class ChartPainter extends CustomPainter {
       // Draw indicator labels
       var labels = c.labels;
       var labelTps = labels
-          .map((e) => TextPainter(
+          .mapIndexed((i, e) => TextPainter(
                 text: TextSpan(
                   text: e,
                   style:
-                      params.style.overlayTextStyle.apply(color: Colors.white),
+                      params.style.overlayTextStyle.apply(color: c.colors[i]),
                 ),
               )
                 ..textDirection = TextDirection.ltr
@@ -778,18 +776,13 @@ class ChartPainter extends CustomPainter {
           .toList();
       var labelX = 0.0;
       for (int i = 0; i < labelTps.length; i++) {
-        var rectW = labelTps[i].height;
-        canvas.drawRect(
-            Rect.fromPoints(
-                Offset(labelX, by), Offset(labelX + rectW, by + rectW)),
-            Paint()..color = c.colors[i]);
         labelTps[i].paint(
             canvas,
             Offset(
-              labelX + rectW + 8,
+              labelX + 8,
               by,
             ));
-        labelX += labelTps[i].width + rectW + 24;
+        labelX += labelTps[i].width + 24;
       }
 
       if (zeroLine) {

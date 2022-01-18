@@ -235,7 +235,9 @@ class _MyAppState extends State<MyApp> {
                           /** Only [candles] is required */
                           period: _period,
                           candles: _candleData,
-                          indicator: _indicator,
+                          additionalChart: _indicator == Indicator.SMA
+                              ? Subchart.sma(_candleData)
+                              : Subchart.ema(_candleData),
                           subcharts: [
                             Subchart.roc(_candleData),
                             Subchart.rsi(_candleData),
