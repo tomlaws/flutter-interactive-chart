@@ -622,6 +622,7 @@ class ChartPainter extends CustomPainter {
       var values = subchart.values;
       var minValue = subchart.min;
       var maxValue = subchart.max;
+      double paddingY = 10;
 
       for (int j = 0; j < values.length; ++j) {
         var leading = subchart.leading[j];
@@ -750,6 +751,7 @@ class ChartPainter extends CustomPainter {
   }
 
   void _drawSubchartLabels(canvas, PainterParams params) {
+    double paddingY = 10;
     for (int i = 0; i < params.subcharts.length; ++i) {
       var c = params.subcharts[i];
       if (c.values.length == 0) continue;

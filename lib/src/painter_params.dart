@@ -78,8 +78,12 @@ class PainterParams {
   double fitPrice(double y) =>
       priceHeight * (maxPrice - y) / (maxPrice - minPrice);
 
+  double subchartPaddingY = 24.0;
   double fitPriceForSubchart(double y, double max, double min) =>
-      subchartHeight * (max - y) / ((max - min) == 0 ? 1 : (max - min));
+      subchartPaddingY +
+      (subchartHeight - subchartPaddingY * 2) *
+          (max - y) /
+          ((max - min) == 0 ? 1 : (max - min));
 
   double fitVolume(double y) {
     final gap = 12; // the gap between price bars and volume bars
