@@ -49,8 +49,11 @@ class Subchart {
         data.add(CandleData.computeROC(candles, params[0]));
         break;
       case Indicator.MACD:
-        data.addAll(
-            CandleData.computeMACD(candles, params[0], params[1], params[2]));
+        var r =
+            CandleData.computeMACD(candles, params[0], params[1], params[2]);
+        data.add(r[1]);
+        data.add(r[2]);
+        data.add(r[0]);
         break;
       case Indicator.RSI:
         data.add(CandleData.computeRSI(candles, params[0]));
@@ -84,16 +87,16 @@ class Subchart {
   Subchart.macd(List<CandleData> candles)
       : this._raw(
             colors: [
-              Colors.white,
-              Colors.green,
               Colors.red,
+              Colors.green,
+              Colors.white,
             ],
             zeroLine: true,
             params: [12, 26, 9],
             indicator: Indicator.MACD,
             candles: candles,
-            hist: [0],
-            pair: [1, 2],
+            hist: [2],
+            pair: [0, 1],
             info: (i, values) => {
                   'MACD (12,26):': values[1][i]?.toStringAsFixed(2) ?? '-',
                   'Signal (9):': values[2][i]?.toStringAsFixed(2) ?? '-',
