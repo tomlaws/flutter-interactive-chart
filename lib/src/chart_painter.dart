@@ -749,7 +749,7 @@ class ChartPainter extends CustomPainter {
     }
   }
 
-  void _drawSubchartLabels(canvas, PainterParams params) {
+  void _drawSubchartLabels(Canvas canvas, PainterParams params) {
     for (int i = 0; i < params.subcharts.length; ++i) {
       var c = params.subcharts[i];
 
@@ -778,13 +778,18 @@ class ChartPainter extends CustomPainter {
           .toList();
       var labelX = 0.0;
       for (int i = 0; i < labelTps.length; i++) {
+        var rectW = labelTps[i].height;
+        canvas.drawRect(
+            Rect.fromPoints(
+                Offset(labelX, by), Offset(labelX + rectW, by + rectW)),
+            Paint()..color = c.colors[i]);
         labelTps[i].paint(
             canvas,
             Offset(
-              labelX + 24 * i,
+              labelX + rectW + 8,
               by,
             ));
-        labelX += labelTps[i].width;
+        labelX += labelTps[i].width + rectW + 24;
       }
 
       if (zeroLine) {
