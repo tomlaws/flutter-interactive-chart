@@ -1,4 +1,4 @@
-enum Indicator { SMA, WMA, EMA, Bollinger, SAR }
+enum Indicator { SMA, WMA, EMA, RSI, MACD, Bollinger, SAR, ROC }
 
 extension IndicatorExtension on Indicator {
   List<String> labels(List<int> periods) {

@@ -622,7 +622,6 @@ class ChartPainter extends CustomPainter {
       var values = subchart.values;
       var minValue = subchart.min;
       var maxValue = subchart.max;
-      double paddingY = 10;
 
       for (int j = 0; j < values.length; ++j) {
         var leading = subchart.leading[j];
@@ -751,9 +750,9 @@ class ChartPainter extends CustomPainter {
   }
 
   void _drawSubchartLabels(canvas, PainterParams params) {
-    double paddingY = 10;
     for (int i = 0; i < params.subcharts.length; ++i) {
       var c = params.subcharts[i];
+
       if (c.values.length == 0) continue;
       double? maxValue = c.max;
       double? minValue = c.min;
@@ -763,6 +762,31 @@ class ChartPainter extends CustomPainter {
           params.style.timeLabelHeight +
           params.chartSpacing +
           params.subchartHeight * i;
+
+      // Draw indicator labels
+      var labels = c.labels;
+      var labelTps = labels
+          .map((e) => TextPainter(
+                text: TextSpan(
+                  text: e,
+                  style:
+                      params.style.overlayTextStyle.apply(color: Colors.white),
+                ),
+              )
+                ..textDirection = TextDirection.ltr
+                ..layout())
+          .toList();
+      var labelX = 0.0;
+      for (int i = 0; i < labelTps.length; i++) {
+        labelTps[i].paint(
+            canvas,
+            Offset(
+              labelX + 24 * i,
+              by,
+            ));
+        labelX += labelTps[i].width;
+      }
+
       if (zeroLine) {
         canvas.drawLine(
           Offset(0, by + params.fitPriceForSubchart(0, maxValue, minValue)),
