@@ -186,6 +186,9 @@ class Subchart {
     if (indicator == Indicator.ROC) {
       return [0];
     }
+    if (indicator == Indicator.MACD) {
+      return [2];
+    }
     return [];
   }
 
