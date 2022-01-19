@@ -36,13 +36,19 @@ class Subchart {
         data.add(CandleData.computeEMA(candles, params[2].toInt()));
         break;
       case Indicator.WMA:
-        // data.add(CandleData.computeWMA(candles, periods[i]));
+        data.add(CandleData.computeWMA(candles, params[0].toInt()));
+        data.add(CandleData.computeWMA(candles, params[1].toInt()));
+        data.add(CandleData.computeWMA(candles, params[2].toInt()));
         break;
       case Indicator.EMA:
         data.add(CandleData.computeEMA(candles, params[0].toInt()));
         break;
-      case Indicator.Bollinger:
-        data.add(CandleData.computeROC(candles, params[0].toInt()));
+      case Indicator.BOLLINGER:
+        var r = CandleData.computeBBands(
+            candles, params[0].toInt(), params[1], params[1]);
+        data.add(r[2]);
+        data.add(r[0]);
+        data.add(r[1]);
         break;
       case Indicator.SAR:
         data.add(CandleData.computeSAR(candles, params[0], params[1]));
@@ -78,6 +84,15 @@ class Subchart {
             ],
             indicator: Indicator.EMA,
             params: [5, 10, 20]);
+  Subchart.wma()
+      : this._raw(
+            colors: [
+              Colors.red.shade400,
+              Colors.purple.shade100,
+              Colors.yellow.shade300,
+            ],
+            indicator: Indicator.WMA,
+            params: [5, 10, 20]);
   Subchart.sar()
       : this._raw(
             colors: [
@@ -85,6 +100,15 @@ class Subchart {
             ],
             indicator: Indicator.SAR,
             params: [0.02, 0.2]);
+  Subchart.bollinger()
+      : this._raw(
+            colors: [
+              Colors.red.shade400,
+              Colors.red.shade400,
+              Colors.yellow.shade300,
+            ],
+            indicator: Indicator.BOLLINGER,
+            params: [20, 2]);
 
   Subchart.roc()
       : this._raw(
@@ -138,11 +162,12 @@ class Subchart {
           'Signal (${params[2]})': (i, values) => _formatValue(values[1][i]),
           'Divergence': (i, values) => _formatValue(values[2][i])
         };
-      case Indicator.Bollinger:
+      case Indicator.BOLLINGER:
         return {
-          'SMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
-          'SMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
-          'SMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+          'BOLLINGER (${params[1]})': (i, values) => _formatValue(values[0][i]),
+          'BOLLINGER (${-params[1]})': (i, values) =>
+              _formatValue(values[1][i]),
+          'SMA (${params[0]})': (i, values) => _formatValue(values[2][i])
         };
       case Indicator.SAR:
         return {

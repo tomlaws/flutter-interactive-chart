@@ -1,1 +1,1 @@
-enum Indicator { SMA, WMA, EMA, RSI, MACD, Bollinger, SAR, ROC }
+enum Indicator { SMA, WMA, EMA, RSI, MACD, BOLLINGER, SAR, ROC }

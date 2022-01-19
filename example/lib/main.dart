@@ -25,7 +25,7 @@ class _MyAppState extends State<MyApp> {
   Timer? _timer;
   List<CandleData> _candleData = [];
   Indicator _indicator = Indicator.SMA;
-  List<bool> isSelected = [true, false, false];
+  List<bool> isSelected = [true, false, false, false, false];
   static List<int> _periods = [
     60,
     120,
@@ -194,7 +194,13 @@ class _MyAppState extends State<MyApp> {
                 height: 36,
                 child: ToggleButtons(
                   //borderRadius: BorderRadius.circular(16),
-                  children: <Widget>[Text('SMA'), Text('EMA'), Text('SAR')],
+                  children: <Widget>[
+                    Text('SMA'),
+                    Text('EMA'),
+                    Text('WMA'),
+                    Text('SAR'),
+                    Text('BOL')
+                  ],
                   //renderBorder: false,
                   onPressed: (int index) {
                     setState(() {
@@ -215,7 +221,13 @@ class _MyAppState extends State<MyApp> {
                           _indicator = Indicator.EMA;
                           break;
                         case 2:
+                          _indicator = Indicator.WMA;
+                          break;
+                        case 3:
                           _indicator = Indicator.SAR;
+                          break;
+                        case 4:
+                          _indicator = Indicator.BOLLINGER;
                           break;
                       }
                     });
@@ -294,8 +306,7 @@ class _MyAppState extends State<MyApp> {
       case Indicator.SMA:
         return Subchart.sma()..setCandles(_candleData);
       case Indicator.WMA:
-        // TODO: Handle this case.
-        break;
+        return Subchart.wma()..setCandles(_candleData);
       case Indicator.EMA:
         return Subchart.ema()..setCandles(_candleData);
       case Indicator.RSI:
@@ -304,8 +315,8 @@ class _MyAppState extends State<MyApp> {
       case Indicator.MACD:
         // TODO: Handle this case.
         break;
-      case Indicator.Bollinger:
-        // TODO: Handle this case.
+      case Indicator.BOLLINGER:
+        return Subchart.bollinger()..setCandles(_candleData);
         break;
       case Indicator.SAR:
         return Subchart.sar()..setCandles(_candleData);

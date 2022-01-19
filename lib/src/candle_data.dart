@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 class CandleData {
   /// The timestamp of this data point, in milliseconds since epoch.
   final int timestamp;
@@ -45,6 +47,104 @@ class CandleData {
     this.low,
     List<double?>? trends,
   }) : this.trends = List.unmodifiable(trends ?? []);
+
+  static List<double?> _var(List<double?> inReal, int inTimePeriod) {
+    List<double?> outReal = List.filled(inReal.length, null);
+    final nbInitialElementNeeded = inTimePeriod - 1;
+    final startIdx = nbInitialElementNeeded;
+    var periodTotal1 = 0.0;
+    var periodTotal2 = 0.0;
+    var trailingIdx = startIdx - nbInitialElementNeeded;
+    var i = trailingIdx;
+    if (inTimePeriod > 1) {
+      for (; i < startIdx;) {
+        var tempReal = inReal.elementAt(i);
+        if (tempReal == null) continue;
+        periodTotal1 += tempReal;
+        tempReal *= tempReal;
+        periodTotal2 += tempReal;
+        i++;
+      }
+    }
+    var outIdx = startIdx;
+    for (var ok = true; ok;) {
+      var tempReal = inReal.elementAt(i);
+      if (tempReal == null) continue;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      final meanValue1 = periodTotal1 / inTimePeriod;
+      final meanValue2 = periodTotal2 / inTimePeriod;
+      tempReal = inReal.elementAt(trailingIdx);
+      periodTotal1 -= tempReal!;
+      tempReal *= tempReal;
+      periodTotal2 -= tempReal;
+      outReal[outIdx] = meanValue2 - meanValue1 * meanValue1;
+      i++;
+      trailingIdx++;
+      outIdx++;
+      ok = i < inReal.length;
+    }
+    return outReal;
+  }
+
+  static List<double?> _stdDev(
+      List<double?> inReal, int inTimePeriod, double inNbDev) {
+    final outReal = _var(inReal, inTimePeriod);
+    if (inNbDev != 1.0) {
+      for (var i = 0; i < inReal.length; i++) {
+        final tempReal = outReal.elementAt(i);
+        if (tempReal == null) continue;
+        if (!(tempReal < 0.00000000000001)) {
+          outReal[i] = math.sqrt(tempReal) * inNbDev;
+        } else {
+          outReal[i] = 0.0;
+        }
+      }
+    } else {
+      for (var i = 0; i < inReal.length; i++) {
+        final tempReal = outReal.elementAt(i);
+        if (tempReal == null) continue;
+        if (!(tempReal < 0.00000000000001)) {
+          outReal[i] = math.sqrt(tempReal);
+        } else {
+          outReal[i] = 0.0;
+        }
+      }
+    }
+    return outReal;
+  }
+
+  static List<double?> _sma(List<double?> inReal, int inTimePeriod) {
+    List<double?> outReal = List.filled(inReal.length, null);
+    final lookbackTotal = inTimePeriod - 1;
+    final startIdx = lookbackTotal;
+    var periodTotal = 0.0;
+    var trailingIdx = startIdx - lookbackTotal;
+    var i = trailingIdx;
+    if (inTimePeriod > 1) {
+      for (; i < startIdx;) {
+        if (inReal.elementAt(i) == null) continue;
+        periodTotal += inReal.elementAt(i)!;
+        i++;
+      }
+    }
+
+    var outIdx = startIdx;
+    for (var ok = true; ok;) {
+      if (inReal.elementAt(i) == null) continue;
+      periodTotal += inReal.elementAt(i)!;
+      final tempReal = periodTotal;
+      if (inReal.elementAt(trailingIdx) == null) continue;
+      periodTotal -= inReal.elementAt(trailingIdx)!;
+      outReal[outIdx] = tempReal / inTimePeriod;
+      trailingIdx++;
+      i++;
+      outIdx++;
+      ok = i < outReal.length;
+    }
+    return outReal;
+  }
 
   static List<double?> computeMA(List<CandleData> data, [int period = 7]) {
     // If data is not at least twice as long as the period, return nulls.
@@ -106,6 +206,125 @@ class CandleData {
       return outReal;
     } catch (ex) {
       return List.filled(data.length, null);
+    }
+  }
+
+  static List<double?> _wma(List<double> inReal, int inTimePeriod) {
+    List<double?> outReal = List.filled(inReal.length, null);
+    final lookbackTotal = inTimePeriod - 1;
+    final startIdx = lookbackTotal;
+    if (inTimePeriod == 1) {
+      outReal = List.from(inReal);
+      return outReal;
+    }
+
+    final divider = (inTimePeriod * (inTimePeriod + 1)) >> 1;
+    var outIdx = inTimePeriod - 1;
+    var trailingIdx = startIdx - lookbackTotal;
+    var periodSum = 0.0;
+    var periodSub = 0.0;
+    var inIdx = trailingIdx;
+    var i = 1;
+    for (; inIdx < startIdx;) {
+      final tempReal = inReal.elementAt(inIdx);
+      periodSub += tempReal;
+      periodSum += tempReal * i;
+      inIdx++;
+      i++;
+    }
+    var trailingValue = 0.0;
+    for (; inIdx < inReal.length;) {
+      final tempReal = inReal.elementAt(inIdx);
+      periodSub += tempReal;
+      periodSub -= trailingValue;
+      periodSum += tempReal * inTimePeriod;
+      trailingValue = inReal.elementAt(trailingIdx);
+      outReal[outIdx] = periodSum / divider;
+      periodSum -= periodSub;
+      inIdx++;
+      trailingIdx++;
+      outIdx++;
+    }
+    return outReal;
+  }
+
+  static List<double?> computeWMA(List<CandleData> data, int inTimePeriod) {
+    try {
+      final outReal =
+          _wma(data.map((e) => e.close ?? 0).toList(), inTimePeriod);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
+  }
+
+  static List<List<double?>> _bbands(List<double?> inReal, int inTimePeriod,
+      double inNbDevUp, double inNbDevDn) {
+    List<double?> outRealUpperBand = List.filled(inReal.length, null);
+    final outRealMiddleBand = _sma(inReal, inTimePeriod);
+    List<double?> outRealLowerBand = List.filled(inReal.length, null);
+    final tempBuffer2 = _stdDev(inReal, inTimePeriod, 1.0);
+    if (inNbDevUp == inNbDevDn) {
+      if (inNbDevUp == 1.0) {
+        for (var i = 0; i < inReal.length; i++) {
+          final tempReal = tempBuffer2.elementAt(i);
+          final tempReal2 = outRealMiddleBand.elementAt(i);
+          if (tempReal == null || tempReal2 == null) continue;
+          outRealUpperBand[i] = tempReal2 + tempReal;
+          outRealLowerBand[i] = tempReal2 - tempReal;
+        }
+      } else {
+        for (var i = 0; i < inReal.length; i++) {
+          if (tempBuffer2.elementAt(i) == null) continue;
+          final tempReal = tempBuffer2.elementAt(i)! * inNbDevUp;
+          final tempReal2 = outRealMiddleBand.elementAt(i);
+          if (tempReal2 == null) continue;
+          outRealUpperBand[i] = tempReal2 + tempReal;
+          outRealLowerBand[i] = tempReal2 - tempReal;
+        }
+      }
+    } else if (inNbDevUp == 1.0) {
+      for (var i = 0; i < inReal.length; i++) {
+        final tempReal = tempBuffer2.elementAt(i);
+        final tempReal2 = outRealMiddleBand.elementAt(i);
+        if (tempReal == null || tempReal2 == null) continue;
+        outRealUpperBand[i] = tempReal2 + tempReal;
+        outRealLowerBand[i] = tempReal2 - (tempReal * inNbDevDn);
+      }
+    } else if (inNbDevDn == 1.0) {
+      for (var i = 0; i < inReal.length; i++) {
+        final tempReal = tempBuffer2.elementAt(i);
+        final tempReal2 = outRealMiddleBand.elementAt(i);
+        if (tempReal == null || tempReal2 == null) continue;
+        outRealLowerBand[i] = tempReal2 - tempReal;
+        outRealUpperBand[i] = tempReal2 + (tempReal * inNbDevUp);
+      }
+    } else {
+      for (var i = 0; i < inReal.length; i++) {
+        final tempReal = tempBuffer2.elementAt(i);
+        final tempReal2 = outRealMiddleBand.elementAt(i);
+        if (tempReal == null || tempReal2 == null) continue;
+        outRealUpperBand[i] = tempReal2 + (tempReal * inNbDevUp);
+        outRealLowerBand[i] = tempReal2 - (tempReal * inNbDevDn);
+      }
+    }
+
+    return [outRealUpperBand, outRealMiddleBand, outRealLowerBand];
+  }
+
+  static List<List<double?>> computeBBands(List<CandleData> data,
+      int inTimePeriod, double inNbDevUp, double inNbDevDn) {
+    try {
+      final outReal = _bbands(data.map((e) => e.close).toList(), inTimePeriod,
+          inNbDevUp, inNbDevDn);
+
+      return outReal;
+    } catch (ex) {
+      return [
+        List.filled(data.length, null),
+        List.filled(data.length, null),
+        List.filled(data.length, null)
+      ];
     }
   }
 

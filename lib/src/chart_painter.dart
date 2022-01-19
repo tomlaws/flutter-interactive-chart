@@ -393,7 +393,7 @@ class ChartPainter extends CustomPainter {
       if (price == null) continue;
       var py = params.fitPriceForSubchart(price, chart.max!, chart.min!) -
           panelHeight / 2;
-      py = py.clamp(0, params.subchartHeight - panelHeight);
+      py = py.clamp(0, params.subchartHeight - panelHeight - 4);
       RRect panelRect = RRect.fromRectAndRadius(
         Offset(baseX, baseY + py) & Size(panelWidth, panelHeight),
         Radius.circular(8),
