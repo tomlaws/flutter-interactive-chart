@@ -240,12 +240,13 @@ class _MyAppState extends State<MyApp> {
                             /** Only [candles] is required */
                             period: _period,
                             candles: _candleData,
-                            additionalChart: getAdditionalChart(_indicator) ??
-                                Subchart.sma(_candleData),
+                            additionalChart:
+                                getAdditionalChart(_indicator) ?? Subchart.sma()
+                                  ..setCandles(_candleData),
                             subcharts: [
-                              Subchart.roc(_candleData),
-                              Subchart.rsi(_candleData),
-                              Subchart.macd(_candleData),
+                              Subchart.roc()..setCandles(_candleData),
+                              Subchart.rsi()..setCandles(_candleData),
+                              Subchart.macd()..setCandles(_candleData),
                             ],
                             initialVisibleCandleCount: 4 * 60,
                             /** Uncomment the following for examples on optional parameters */
@@ -255,32 +256,7 @@ class _MyAppState extends State<MyApp> {
                               // priceGainColor: Colors.teal[200]!,
                               // priceLossColor: Colors.blueGrey,
                               // volumeColor: Colors.teal.withOpacity(0.8),
-                              trendLineStyles: [
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.red.shade400,
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.purple.shade100,
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.yellow.shade300,
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.indigo.shade200,
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.orange.shade400,
-                                Paint()
-                                  ..strokeWidth = 1.0
-                                  ..strokeCap = StrokeCap.round
-                                  ..color = Colors.pink.shade200
-                              ],
+                              trendLineStyles: [],
                               // priceGridLineColor: Colors.blue[200]!,
                               // priceLabelStyle: TextStyle(color: Colors.blue[200]),
                               // timeLabelStyle: TextStyle(color: Colors.blue[200]),
@@ -316,12 +292,12 @@ class _MyAppState extends State<MyApp> {
   Subchart? getAdditionalChart(Indicator ind) {
     switch (ind) {
       case Indicator.SMA:
-        return Subchart.sma(_candleData);
+        return Subchart.sma()..setCandles(_candleData);
       case Indicator.WMA:
         // TODO: Handle this case.
         break;
       case Indicator.EMA:
-        return Subchart.ema(_candleData);
+        return Subchart.ema()..setCandles(_candleData);
       case Indicator.RSI:
         // TODO: Handle this case.
         break;
@@ -332,7 +308,7 @@ class _MyAppState extends State<MyApp> {
         // TODO: Handle this case.
         break;
       case Indicator.SAR:
-        return Subchart.sar(_candleData);
+        return Subchart.sar()..setCandles(_candleData);
       case Indicator.ROC:
         // TODO: Handle this case.
         break;

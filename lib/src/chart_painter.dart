@@ -262,19 +262,18 @@ class ChartPainter extends CustomPainter {
       if (params.additionalChart.dotted) {
         if (pt != null)
           canvas.drawCircle(
-              Offset(x - params.candleWidth, params.fitPrice(pt)),
+              Offset(x, params.fitPrice(pt)),
               params.candleWidth / 2 / 2,
               Paint()
                 ..strokeCap = StrokeCap.round
-                ..color = params.additionalChart.colors[0]);
+                ..color = params.additionalChart.colors[j]);
         continue;
       }
 
-      final trendLinePaint = params.style.trendLineStyles.at(j) ??
-          (Paint()
-            ..strokeWidth = 2.0
-            ..strokeCap = StrokeCap.round
-            ..color = Colors.blue);
+      final trendLinePaint = (Paint()
+        ..strokeWidth = 1.0
+        ..strokeCap = StrokeCap.round
+        ..color = params.additionalChart.colors[j]);
 
       if (pt != null && prevPt != null) {
         canvas.drawLine(
@@ -332,8 +331,8 @@ class ChartPainter extends CustomPainter {
       double? v = additionalChart.values[j].at(i);
       if (v == null) continue;
       var py = params.fitPrice(v);
-      canvas.drawCircle(Offset(px, py), 6,
-          Paint()..color = params.style.trendLineStyles[j].color);
+      canvas.drawCircle(Offset(px, py), min(4, params.candleWidth / 2),
+          Paint()..color = params.additionalChart.colors[j]);
     }
 
     // For subcharts
@@ -344,11 +343,11 @@ class ChartPainter extends CustomPainter {
       if (chart.max == null || chart.min == null) continue;
       final info = chart.labels;
       final labelPainters = info.keys
-          .map((e) => TextPainter(
+          .mapIndexed((i, e) => TextPainter(
                 text: TextSpan(
-                  text: e,
-                  style:
-                      params.style.overlayTextStyle.apply(color: Colors.white),
+                  text: e + ':',
+                  style: params.style.overlayTextStyle
+                      .apply(color: chart.colors[i]),
                 ),
               )
                 ..textDirection = TextDirection.ltr
@@ -393,7 +392,7 @@ class ChartPainter extends CustomPainter {
       var price = chart.yForOverlay(i);
       if (price == null) continue;
       var py = params.fitPriceForSubchart(price, chart.max!, chart.min!) -
-          labelMaxHeight / 2;
+          panelHeight / 2;
       py = py.clamp(0, params.subchartHeight - panelHeight);
       RRect panelRect = RRect.fromRectAndRadius(
         Offset(baseX, baseY + py) & Size(panelWidth, panelHeight),
@@ -525,8 +524,8 @@ class ChartPainter extends CustomPainter {
     if (additionalChart.values.length > 0) {
       final info = additionalChart.labels;
       final labels = info.keys
-          .mapIndexed(
-              (i, t) => makeTP(t, color: params.style.trendLineStyles[i].color))
+          .mapIndexed((i, t) =>
+              makeTP(t + ':', color: params.additionalChart.colors[i]))
           .toList();
       final values =
           info.values.map((f) => makeTP(f(d, additionalChart.values))).toList();

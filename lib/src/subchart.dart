@@ -8,23 +8,18 @@ import 'package:collection/collection.dart';
 import 'dart:math';
 
 class Subchart {
-  late final List<List<double?>> data;
+  List<List<double?>> data = [];
   final Indicator indicator;
   final List<double> params;
   final List<Color> colors;
-  final List<int> hist; //index of data needs to be histogram
-  final List<int>? pair; //index of a pair, length must be equal to 2
 
-  final bool zeroLine;
+  Subchart._raw({
+    required this.indicator,
+    required this.params,
+    required this.colors,
+  });
 
-  Subchart._raw(
-      {required List<CandleData> candles,
-      required this.indicator,
-      required this.params,
-      required this.colors,
-      required this.hist,
-      required this.pair,
-      this.zeroLine = false}) {
+  void setCandles(List<CandleData> candles) {
     data = [];
     switch (indicator) {
       case Indicator.ROC:
@@ -64,73 +59,47 @@ class Subchart {
         break;
     }
   }
-  Subchart.sma(List<CandleData> candles)
-      : this._raw(
-          colors: [
-            Colors.red.shade400,
-            Colors.purple.shade100,
-            Colors.yellow.shade300,
-          ],
-          candles: candles,
-          indicator: Indicator.SMA,
-          params: [5, 10, 20],
-          hist: [],
-          pair: null,
-        );
-  Subchart.ema(List<CandleData> candles)
-      : this._raw(
-          colors: [
-            Colors.red.shade400,
-            Colors.purple.shade100,
-            Colors.yellow.shade300,
-          ],
-          candles: candles,
-          indicator: Indicator.EMA,
-          params: [5, 10, 20],
-          hist: [],
-          pair: null,
-        );
-  Subchart.sar(List<CandleData> candles)
-      : this._raw(
-          colors: [
-            Colors.white70,
-          ],
-          candles: candles,
-          indicator: Indicator.SAR,
-          params: [0.02, 0.2],
-          hist: [],
-          pair: null,
-        );
 
-  Subchart.roc(List<CandleData> candles)
+  Subchart.sma()
       : this._raw(
-            colors: [Colors.white70],
-            candles: candles,
-            indicator: Indicator.ROC,
-            params: [12],
-            hist: [0],
-            pair: null,
-            zeroLine: true);
+            colors: [
+              Colors.red.shade400,
+              Colors.purple.shade100,
+              Colors.yellow.shade300,
+            ],
+            indicator: Indicator.SMA,
+            params: [5, 10, 20]);
+  Subchart.ema()
+      : this._raw(
+            colors: [
+              Colors.red.shade400,
+              Colors.purple.shade100,
+              Colors.yellow.shade300,
+            ],
+            indicator: Indicator.EMA,
+            params: [5, 10, 20]);
+  Subchart.sar()
+      : this._raw(
+            colors: [
+              Colors.white70,
+            ],
+            indicator: Indicator.SAR,
+            params: [0.02, 0.2]);
 
-  Subchart.rsi(List<CandleData> candles)
+  Subchart.roc()
       : this._raw(
-          colors: [Colors.white70],
-          candles: candles,
-          indicator: Indicator.RSI,
-          params: [14],
-          hist: [],
-          pair: null,
+            colors: [Colors.white70], indicator: Indicator.ROC, params: [12]);
+
+  Subchart.rsi()
+      : this._raw(
+            colors: [Colors.white70], indicator: Indicator.RSI, params: [14]);
+
+  Subchart.macd()
+      : this._raw(
+          colors: [Colors.red, Colors.green, Colors.white70],
+          params: [12, 26, 9],
+          indicator: Indicator.MACD,
         );
-
-  Subchart.macd(List<CandleData> candles)
-      : this._raw(
-            colors: [Colors.red, Colors.green, Colors.white70],
-            zeroLine: true,
-            params: [12, 26, 9],
-            indicator: Indicator.MACD,
-            candles: candles,
-            hist: [2],
-            pair: [0, 1]);
 
   Map<String, String Function(int index, List<List<double?>> values)>
       get labels {
@@ -188,6 +157,20 @@ class Subchart {
     }
   }
 
+  List<int> get hist {
+    if (indicator == Indicator.ROC) {
+      return [0];
+    }
+    return [];
+  }
+
+  List<int>? get pair {
+    if (indicator == Indicator.MACD) {
+      return [0, 1];
+    }
+    return null;
+  }
+
   bool get dotted {
     switch (indicator) {
       case Indicator.SAR:
@@ -195,6 +178,13 @@ class Subchart {
       default:
         return false;
     }
+  }
+
+  bool get zeroLine {
+    if ([Indicator.ROC, Indicator.MACD].contains(indicator)) {
+      return true;
+    }
+    return false;
   }
 
   String _formatValue(double? v) {
