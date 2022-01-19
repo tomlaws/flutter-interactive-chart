@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:interactive_chart/interactive_chart.dart';
+import 'dart:math';
 
 import 'chart_style.dart';
 import 'candle_data.dart';
@@ -54,7 +55,7 @@ class PainterParams {
       chartSpacing + (subcharts.length * (style.subchartHeight));
 
   double get chartHeight => // height without time labels
-      size.height - style.timeLabelHeight - subchartsHeight;
+      max(480, size.height - style.timeLabelHeight - subchartsHeight);
 
   double get volumeHeight => chartHeight * style.volumeHeightFactor;
 
@@ -69,8 +70,10 @@ class PainterParams {
     return i;
   }
 
+  double paddingY = 24.0;
   double fitPrice(double y) =>
-      priceHeight * (maxPrice - y) / (maxPrice - minPrice);
+      paddingY +
+      (priceHeight - paddingY * 2) * (maxPrice - y) / (maxPrice - minPrice);
 
   double subchartPaddingY = 24.0;
   double fitPriceForSubchart(double y, double max, double min) =>

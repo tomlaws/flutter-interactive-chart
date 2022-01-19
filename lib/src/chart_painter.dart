@@ -165,7 +165,7 @@ class ChartPainter extends CustomPainter {
     });
   }
 
-  void _drawSingleDay(canvas, PainterParams params, int i) {
+  void _drawSingleDay(Canvas canvas, PainterParams params, int i) {
     final candle = params.candles[i];
     final additionalChart = params.additionalChart.values;
     final x = i * params.candleWidth;
@@ -256,14 +256,26 @@ class ChartPainter extends CustomPainter {
     // Draw additional trend line
     // Draw trend line
     for (int j = 0; j < additionalChart.length; j++) {
+      final pt = additionalChart[j].at(i); // current data point
+      final prevPt = additionalChart[j].at(i - 1);
+      // If dotted
+      if (params.additionalChart.dotted) {
+        if (pt != null)
+          canvas.drawCircle(
+              Offset(x - params.candleWidth, params.fitPrice(pt)),
+              params.candleWidth / 2 / 2,
+              Paint()
+                ..strokeCap = StrokeCap.round
+                ..color = params.additionalChart.colors[0]);
+        continue;
+      }
+
       final trendLinePaint = params.style.trendLineStyles.at(j) ??
           (Paint()
             ..strokeWidth = 2.0
             ..strokeCap = StrokeCap.round
             ..color = Colors.blue);
 
-      final pt = additionalChart[j].at(i); // current data point
-      final prevPt = additionalChart[j].at(i - 1);
       if (pt != null && prevPt != null) {
         canvas.drawLine(
           Offset(x - params.candleWidth, params.fitPrice(prevPt)),
@@ -756,12 +768,7 @@ class ChartPainter extends CustomPainter {
         .toList();
     var labelX = 0.0;
     for (int i = 0; i < labelTps.length; i++) {
-      labelTps[i].paint(
-          canvas,
-          Offset(
-            labelX + 8,
-            -labelTps[i].height,
-          ));
+      labelTps[i].paint(canvas, Offset(labelX + 8, 4));
       labelX += labelTps[i].width + 24;
     }
   }

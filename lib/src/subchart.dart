@@ -10,7 +10,7 @@ import 'dart:math';
 class Subchart {
   late final List<List<double?>> data;
   final Indicator indicator;
-  final List<int> params;
+  final List<double> params;
   final List<Color> colors;
   final List<int> hist; //index of data needs to be histogram
   final List<int>? pair; //index of a pair, length must be equal to 2
@@ -28,68 +28,80 @@ class Subchart {
     data = [];
     switch (indicator) {
       case Indicator.ROC:
-        data.add(CandleData.computeROC(candles, params[0]));
+        data.add(CandleData.computeROC(candles, params[0].toInt()));
         break;
       case Indicator.SMA:
-        data.add(CandleData.computeMA(candles, params[0]));
-        data.add(CandleData.computeMA(candles, params[1]));
-        data.add(CandleData.computeMA(candles, params[2]));
+        data.add(CandleData.computeMA(candles, params[0].toInt()));
+        data.add(CandleData.computeMA(candles, params[1].toInt()));
+        data.add(CandleData.computeMA(candles, params[2].toInt()));
         break;
       case Indicator.EMA:
-        data.add(CandleData.computeEMA(candles, params[0]));
-        data.add(CandleData.computeEMA(candles, params[1]));
-        data.add(CandleData.computeEMA(candles, params[2]));
+        data.add(CandleData.computeEMA(candles, params[0].toInt()));
+        data.add(CandleData.computeEMA(candles, params[1].toInt()));
+        data.add(CandleData.computeEMA(candles, params[2].toInt()));
         break;
       case Indicator.WMA:
         // data.add(CandleData.computeWMA(candles, periods[i]));
         break;
       case Indicator.EMA:
-        data.add(CandleData.computeEMA(candles, params[0]));
+        data.add(CandleData.computeEMA(candles, params[0].toInt()));
         break;
       case Indicator.Bollinger:
-        data.add(CandleData.computeROC(candles, params[0]));
+        data.add(CandleData.computeROC(candles, params[0].toInt()));
         break;
       case Indicator.SAR:
-        data.add(CandleData.computeROC(candles, params[0]));
+        data.add(CandleData.computeSAR(candles, params[0], params[1]));
         break;
       case Indicator.MACD:
-        var r =
-            CandleData.computeMACD(candles, params[0], params[1], params[2]);
+        var r = CandleData.computeMACD(
+            candles, params[0].toInt(), params[1].toInt(), params[2].toInt());
         data.add(r[1]);
         data.add(r[2]);
         data.add(r[0]);
         break;
       case Indicator.RSI:
-        data.add(CandleData.computeRSI(candles, params[0]));
+        data.add(CandleData.computeRSI(candles, params[0].toInt()));
         break;
     }
   }
   Subchart.sma(List<CandleData> candles)
       : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.purple.shade100,
-              Colors.yellow.shade300,
-            ],
-            candles: candles,
-            indicator: Indicator.SMA,
-            params: [5, 10, 20],
-            hist: [],
-            pair: null,
-            zeroLine: true);
+          colors: [
+            Colors.red.shade400,
+            Colors.purple.shade100,
+            Colors.yellow.shade300,
+          ],
+          candles: candles,
+          indicator: Indicator.SMA,
+          params: [5, 10, 20],
+          hist: [],
+          pair: null,
+        );
   Subchart.ema(List<CandleData> candles)
       : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.purple.shade100,
-              Colors.yellow.shade300,
-            ],
-            candles: candles,
-            indicator: Indicator.EMA,
-            params: [5, 10, 20],
-            hist: [],
-            pair: null,
-            zeroLine: true);
+          colors: [
+            Colors.red.shade400,
+            Colors.purple.shade100,
+            Colors.yellow.shade300,
+          ],
+          candles: candles,
+          indicator: Indicator.EMA,
+          params: [5, 10, 20],
+          hist: [],
+          pair: null,
+        );
+  Subchart.sar(List<CandleData> candles)
+      : this._raw(
+          colors: [
+            Colors.white70,
+          ],
+          candles: candles,
+          indicator: Indicator.SAR,
+          params: [0.02, 0.2],
+          hist: [],
+          pair: null,
+        );
+
   Subchart.roc(List<CandleData> candles)
       : this._raw(
             colors: [Colors.white70],
@@ -112,11 +124,7 @@ class Subchart {
 
   Subchart.macd(List<CandleData> candles)
       : this._raw(
-            colors: [
-              Colors.red,
-              Colors.green,
-              Colors.white,
-            ],
+            colors: [Colors.red, Colors.green, Colors.white70],
             zeroLine: true,
             params: [12, 26, 9],
             indicator: Indicator.MACD,
@@ -145,6 +153,11 @@ class Subchart {
           'EMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
           'EMA (${params[2]})': (i, values) => _formatValue(values[2][i])
         };
+      case Indicator.SAR:
+        return {
+          'SAR (${params[0]},${params[1]})': (i, values) =>
+              _formatValue(values[0][i]),
+        };
       case Indicator.RSI:
         return {
           'RSI (${params[0]})': (i, values) => _formatValue(values[0][i]),
@@ -172,6 +185,15 @@ class Subchart {
         return {
           "ROC (${params[0]})": (i, values) => _formatValue(values[0][i]),
         };
+    }
+  }
+
+  bool get dotted {
+    switch (indicator) {
+      case Indicator.SAR:
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -226,6 +248,10 @@ class SubchartRange {
 
   List<int> get hist {
     return this.subchart.hist;
+  }
+
+  bool get dotted {
+    return this.subchart.dotted;
   }
 
   bool get zeroLine {

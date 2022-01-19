@@ -296,6 +296,238 @@ class CandleData {
     }
   }
 
+  static List<double> _minusDM(List inHigh, List inLow, int inTimePeriod) {
+    List<double> outReal = List.filled(inHigh.length, 0.0);
+    var lookbackTotal = 1;
+    if (inTimePeriod > 1) {
+      lookbackTotal = inTimePeriod - 1;
+    }
+
+    final startIdx = lookbackTotal;
+    var outIdx = startIdx;
+    var today = startIdx;
+    var prevHigh = 0.0;
+    var prevLow = 0.0;
+    if (inTimePeriod <= 1) {
+      today = startIdx - 1;
+      prevHigh = inHigh.elementAt(today);
+      prevLow = inLow.elementAt(today);
+      for (; today < inHigh.length - 1;) {
+        today++;
+        var tempReal = inHigh.elementAt(today);
+        final diffP = tempReal - prevHigh;
+        prevHigh = tempReal;
+        tempReal = inLow.elementAt(today);
+        final diffM = prevLow - tempReal;
+        prevLow = tempReal;
+        if ((diffM > 0) && (diffP < diffM)) {
+          outReal[outIdx] = diffM;
+        } else {
+          outReal[outIdx] = 0;
+        }
+        outIdx++;
+      }
+      return outReal;
+    }
+
+    var prevMinusDM = 0.0;
+    today = startIdx - lookbackTotal;
+    prevHigh = inHigh.elementAt(today);
+    prevLow = inLow.elementAt(today);
+    var i = inTimePeriod - 1;
+    for (; i > 0;) {
+      i--;
+      today++;
+      var tempReal = inHigh.elementAt(today);
+      final diffP = tempReal - prevHigh;
+      prevHigh = tempReal;
+      tempReal = inLow.elementAt(today);
+      final diffM = prevLow - tempReal;
+      prevLow = tempReal;
+      if ((diffM > 0) && (diffP < diffM)) {
+        prevMinusDM += diffM;
+      }
+    }
+    i = 0;
+    for (; i != 0;) {
+      i--;
+      today++;
+      var tempReal = inHigh.elementAt(today);
+      final diffP = tempReal - prevHigh;
+      prevHigh = tempReal;
+      tempReal = inLow.elementAt(today);
+      final diffM = prevLow - tempReal;
+      prevLow = tempReal;
+      if ((diffM > 0) && (diffP < diffM)) {
+        prevMinusDM = prevMinusDM - (prevMinusDM / inTimePeriod) + diffM;
+      } else {
+        prevMinusDM = prevMinusDM - (prevMinusDM / inTimePeriod);
+      }
+    }
+    outReal[startIdx] = prevMinusDM;
+    outIdx = startIdx + 1;
+    for (; today < inHigh.length - 1;) {
+      today++;
+      var tempReal = inHigh.elementAt(today);
+      final diffP = tempReal - prevHigh;
+      prevHigh = tempReal;
+      tempReal = inLow.elementAt(today);
+      final diffM = prevLow - tempReal;
+      prevLow = tempReal;
+      if ((diffM > 0) && (diffP < diffM)) {
+        prevMinusDM = prevMinusDM - (prevMinusDM / inTimePeriod) + diffM;
+      } else {
+        prevMinusDM = prevMinusDM - (prevMinusDM / inTimePeriod);
+      }
+      outReal[outIdx] = prevMinusDM;
+      outIdx++;
+    }
+    return outReal;
+  }
+
+  static List<double?> _sar(List<double> inHigh, List<double> inLow,
+      double inAcceleration, double inMaximum) {
+    List<double?> outReal = List<double?>.filled(inHigh.length, null);
+    var af = inAcceleration;
+    if (af > inMaximum) {
+      af = inMaximum;
+      inAcceleration = inMaximum;
+    }
+
+    final epTemp = _minusDM(inHigh, inLow, 1);
+    var isLong = 1;
+    if (epTemp.elementAt(1) > 0) {
+      isLong = 0;
+    }
+
+    const startIdx = 1;
+    var outIdx = startIdx;
+    var todayIdx = startIdx;
+    var newHigh = inHigh.elementAt(todayIdx - 1);
+    var newLow = inLow.elementAt(todayIdx - 1);
+    var sar = 0.0;
+    var ep = 0.0;
+    if (isLong == 1) {
+      ep = inHigh.elementAt(todayIdx);
+      sar = newLow;
+    } else {
+      ep = inLow.elementAt(todayIdx);
+      sar = newHigh;
+    }
+    newLow = inLow.elementAt(todayIdx);
+    newHigh = inHigh.elementAt(todayIdx);
+    var prevLow = 0.0;
+    var prevHigh = 0.0;
+    for (; todayIdx < inHigh.length;) {
+      prevLow = newLow;
+      prevHigh = newHigh;
+      newLow = inLow.elementAt(todayIdx);
+      newHigh = inHigh.elementAt(todayIdx);
+      todayIdx++;
+      if (isLong == 1) {
+        if (newLow <= sar) {
+          isLong = 0;
+          sar = ep;
+          if (sar < prevHigh) {
+            sar = prevHigh;
+          }
+
+          if (sar < newHigh) {
+            sar = newHigh;
+          }
+
+          outReal[outIdx] = sar;
+          outIdx++;
+          af = inAcceleration;
+          ep = newLow;
+          sar = sar + af * (ep - sar);
+          if (sar < prevHigh) {
+            sar = prevHigh;
+          }
+
+          if (sar < newHigh) {
+            sar = newHigh;
+          }
+        } else {
+          outReal[outIdx] = sar;
+          outIdx++;
+          if (newHigh > ep) {
+            ep = newHigh;
+            af += inAcceleration;
+            if (af > inMaximum) {
+              af = inMaximum;
+            }
+          }
+
+          sar = sar + af * (ep - sar);
+          if (sar > prevLow) {
+            sar = prevLow;
+          }
+
+          if (sar > newLow) {
+            sar = newLow;
+          }
+        }
+      } else {
+        if (newHigh >= sar) {
+          isLong = 1;
+          sar = ep;
+          if (sar > prevLow) {
+            sar = prevLow;
+          }
+
+          if (sar > newLow) {
+            sar = newLow;
+          }
+
+          outReal[outIdx] = sar;
+          outIdx++;
+          af = inAcceleration;
+          ep = newHigh;
+          sar = sar + af * (ep - sar);
+          if (sar > prevLow) {
+            sar = prevLow;
+          }
+
+          if (sar > newLow) {
+            sar = newLow;
+          }
+        } else {
+          outReal[outIdx] = sar;
+          outIdx++;
+          if (newLow < ep) {
+            ep = newLow;
+            af += inAcceleration;
+            if (af > inMaximum) {
+              af = inMaximum;
+            }
+          }
+
+          sar = sar + af * (ep - sar);
+          if (sar < prevHigh) {
+            sar = prevHigh;
+          }
+
+          if (sar < newHigh) {
+            sar = newHigh;
+          }
+        }
+      }
+    }
+    return outReal;
+  }
+
+  static List<double?> computeSAR(
+      List<CandleData> data, double inAcceleration, double inMaximum) {
+    try {
+      final outReal = _sar(data.map((e) => e.high ?? 0).toList(),
+          data.map((e) => e.low ?? 0).toList(), inAcceleration, inMaximum);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
+  }
+
   @override
   String toString() => "<CandleData ($timestamp: $close)>";
 }

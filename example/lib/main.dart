@@ -25,7 +25,7 @@ class _MyAppState extends State<MyApp> {
   Timer? _timer;
   List<CandleData> _candleData = [];
   Indicator _indicator = Indicator.SMA;
-  List<bool> isSelected = [true, false];
+  List<bool> isSelected = [true, false, false];
   static List<int> _periods = [
     60,
     120,
@@ -194,7 +194,7 @@ class _MyAppState extends State<MyApp> {
                 height: 36,
                 child: ToggleButtons(
                   //borderRadius: BorderRadius.circular(16),
-                  children: <Widget>[Text('SMA'), Text('EMA')],
+                  children: <Widget>[Text('SMA'), Text('EMA'), Text('SAR')],
                   //renderBorder: false,
                   onPressed: (int index) {
                     setState(() {
@@ -213,6 +213,9 @@ class _MyAppState extends State<MyApp> {
                           break;
                         case 1:
                           _indicator = Indicator.EMA;
+                          break;
+                        case 2:
+                          _indicator = Indicator.SAR;
                           break;
                       }
                     });
@@ -237,13 +240,12 @@ class _MyAppState extends State<MyApp> {
                             /** Only [candles] is required */
                             period: _period,
                             candles: _candleData,
-                            additionalChart: _indicator == Indicator.SMA
-                                ? Subchart.sma(_candleData)
-                                : Subchart.ema(_candleData),
+                            additionalChart: getAdditionalChart(_indicator) ??
+                                Subchart.sma(_candleData),
                             subcharts: [
                               Subchart.roc(_candleData),
                               Subchart.rsi(_candleData),
-                              Subchart.macd(_candleData)
+                              Subchart.macd(_candleData),
                             ],
                             initialVisibleCandleCount: 4 * 60,
                             /** Uncomment the following for examples on optional parameters */
@@ -293,7 +295,7 @@ class _MyAppState extends State<MyApp> {
                             // },
                             // priceLabel: (price) => "${price.round()} 💎",
                             /** Customize overlay (tap and hold to see it)
-                 ** Or return an empty object to disable overlay info. */
+                                         ** Or return an empty object to disable overlay info. */
                             // overlayInfo: (candle) => {
                             //   "💎": "🤚    ",
                             //   "Hi": "${candle.high?.toStringAsFixed(2)}",
@@ -311,49 +313,29 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  _computeTrendLines() {
-    // final ma7 = CandleData.computeMA(_data, 7);
-    // final ma30 = CandleData.computeMA(_data, 30);
-    // final ma90 = CandleData.computeMA(_data, 90);
-
-    // final ema7 = CandleData.computeEma(_data, 7);
-    // final ema30 = CandleData.computeEma(_data, 30);
-    // final ema90 = CandleData.computeEma(_data, 90);
-    List<List<double?>> set = [];
-    switch (_indicator) {
+  Subchart? getAdditionalChart(Indicator ind) {
+    switch (ind) {
       case Indicator.SMA:
-        set = [
-          CandleData.computeMA(_candleData, 5),
-          CandleData.computeMA(_candleData, 10),
-          CandleData.computeMA(_candleData, 20),
-          //CandleData.computeMA(_candleData, 50),
-          //CandleData.computeMA(_candleData, 100),
-          //CandleData.computeMA(_candleData, 150)
-        ];
+        return Subchart.sma(_candleData);
+      case Indicator.WMA:
+        // TODO: Handle this case.
         break;
       case Indicator.EMA:
-        set = [
-          CandleData.computeEMA(_candleData, 5),
-          CandleData.computeEMA(_candleData, 10),
-          CandleData.computeEMA(_candleData, 20),
-          // CandleData.computeEMA(_candleData, 100),
-          // CandleData.computeEMA(_candleData, 150)
-        ];
+        return Subchart.ema(_candleData);
+      case Indicator.RSI:
+        // TODO: Handle this case.
         break;
-      default:
+      case Indicator.MACD:
+        // TODO: Handle this case.
         break;
-    }
-    for (int i = 0; i < _candleData.length; i++) {
-      _candleData[i].trends = set.map((s) => s[i]).toList();
-    }
-    setState(() {});
-    //final test = CandleData.computeEmaRaw([10, 22, 15, 50, 40], 5);
-    //print(test);
-  }
-
-  _removeTrendLines() {
-    for (final data in _data) {
-      data.trends = [];
+      case Indicator.Bollinger:
+        // TODO: Handle this case.
+        break;
+      case Indicator.SAR:
+        return Subchart.sar(_candleData);
+      case Indicator.ROC:
+        // TODO: Handle this case.
+        break;
     }
   }
 }
