@@ -231,75 +231,78 @@ class _MyAppState extends State<MyApp> {
                     )
                   : _candleData.length == 0
                       ? SizedBox()
-                      : InteractiveChart(
-                          /** Only [candles] is required */
-                          period: _period,
-                          candles: _candleData,
-                          additionalChart: _indicator == Indicator.SMA
-                              ? Subchart.sma(_candleData)
-                              : Subchart.ema(_candleData),
-                          subcharts: [
-                            Subchart.roc(_candleData),
-                            Subchart.rsi(_candleData),
-                            Subchart.macd(_candleData)
-                          ],
-                          initialVisibleCandleCount: 4 * 60,
-                          /** Uncomment the following for examples on optional parameters */
-
-                          /** Example styling */
-                          style: ChartStyle(
-                            // priceGainColor: Colors.teal[200]!,
-                            // priceLossColor: Colors.blueGrey,
-                            // volumeColor: Colors.teal.withOpacity(0.8),
-                            trendLineStyles: [
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.red.shade400,
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.purple.shade100,
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.yellow.shade300,
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.indigo.shade200,
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.orange.shade400,
-                              Paint()
-                                ..strokeWidth = 1.0
-                                ..strokeCap = StrokeCap.round
-                                ..color = Colors.pink.shade200
+                      : Container(
+                          color: Colors.black38,
+                          child: InteractiveChart(
+                            /** Only [candles] is required */
+                            period: _period,
+                            candles: _candleData,
+                            additionalChart: _indicator == Indicator.SMA
+                                ? Subchart.sma(_candleData)
+                                : Subchart.ema(_candleData),
+                            subcharts: [
+                              Subchart.roc(_candleData),
+                              Subchart.rsi(_candleData),
+                              Subchart.macd(_candleData)
                             ],
-                            // priceGridLineColor: Colors.blue[200]!,
-                            // priceLabelStyle: TextStyle(color: Colors.blue[200]),
-                            // timeLabelStyle: TextStyle(color: Colors.blue[200]),
-                            // selectionHighlightColor: Colors.red.withOpacity(0.2),
-                            // overlayBackgroundColor: Colors.red[900]!.withOpacity(0.6),
-                            // overlayTextStyle: TextStyle(color: Colors.red[100]),
-                            // timeLabelHeight: 32,
-                          ),
-                          /** Customize axis labels */
-                          // timeLabel: (timestamp, visibleDataCount) {
-                          //   return _formatTimestamp(timestamp);
-                          // },
-                          // priceLabel: (price) => "${price.round()} 💎",
-                          /** Customize overlay (tap and hold to see it)
+                            initialVisibleCandleCount: 4 * 60,
+                            /** Uncomment the following for examples on optional parameters */
+
+                            /** Example styling */
+                            style: ChartStyle(
+                              // priceGainColor: Colors.teal[200]!,
+                              // priceLossColor: Colors.blueGrey,
+                              // volumeColor: Colors.teal.withOpacity(0.8),
+                              trendLineStyles: [
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.red.shade400,
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.purple.shade100,
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.yellow.shade300,
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.indigo.shade200,
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.orange.shade400,
+                                Paint()
+                                  ..strokeWidth = 1.0
+                                  ..strokeCap = StrokeCap.round
+                                  ..color = Colors.pink.shade200
+                              ],
+                              // priceGridLineColor: Colors.blue[200]!,
+                              // priceLabelStyle: TextStyle(color: Colors.blue[200]),
+                              // timeLabelStyle: TextStyle(color: Colors.blue[200]),
+                              // selectionHighlightColor: Colors.red.withOpacity(0.2),
+                              // overlayBackgroundColor: Colors.red[900]!.withOpacity(0.6),
+                              // overlayTextStyle: TextStyle(color: Colors.red[100]),
+                              // timeLabelHeight: 32,
+                            ),
+                            /** Customize axis labels */
+                            // timeLabel: (timestamp, visibleDataCount) {
+                            //   return _formatTimestamp(timestamp);
+                            // },
+                            // priceLabel: (price) => "${price.round()} 💎",
+                            /** Customize overlay (tap and hold to see it)
                  ** Or return an empty object to disable overlay info. */
-                          // overlayInfo: (candle) => {
-                          //   "💎": "🤚    ",
-                          //   "Hi": "${candle.high?.toStringAsFixed(2)}",
-                          //   "Lo": "${candle.low?.toStringAsFixed(2)}",
-                          // },
-                          /** Callbacks */
-                          // onTap: (candle) => print("user tapped on $candle"),
-                          // onCandleResize: (width) => print("each candle is $width wide"),
+                            // overlayInfo: (candle) => {
+                            //   "💎": "🤚    ",
+                            //   "Hi": "${candle.high?.toStringAsFixed(2)}",
+                            //   "Lo": "${candle.low?.toStringAsFixed(2)}",
+                            // },
+                            /** Callbacks */
+                            // onTap: (candle) => print("user tapped on $candle"),
+                            // onCandleResize: (width) => print("each candle is $width wide"),
+                          ),
                         ),
             ),
           ]),

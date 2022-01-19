@@ -114,32 +114,6 @@ class _InteractiveChartState extends State<InteractiveChart> {
 
   @override
   Widget build(BuildContext context) {
-    // List<List<double?>> additionalTrends = [];
-    // for (int i = 0; i < widget.candles.length; ++i) {
-    //   additionalTrends
-    //       .add(widget.additionalChart!.data.map((e) => e[i]).toList());
-    // }
-    // List<int> periods = [5, 10, 20];
-    // switch (widget.indicator) {
-    //   case Indicator.SMA:
-    //     var set = periods
-    //         .map((e) => CandleData.computeMA(widget.candles, e))
-    //         .toList();
-    //     for (int i = 0; i < widget.candles.length; ++i) {
-    //       additionalTrends.add(set.map((e) => e[i]).toList());
-    //     }
-    //     break;
-    //   case Indicator.EMA:
-    //     var set = periods
-    //         .map((e) => CandleData.computeEMA(widget.candles, e))
-    //         .toList();
-    //     for (int i = 0; i < widget.candles.length; ++i) {
-    //       additionalTrends.add(set.map((e) => e[i]).toList());
-    //     }
-    //     break;
-    //   default:
-    //     break;
-    // }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // if (widget.indicator != null)
       //   Wrap(

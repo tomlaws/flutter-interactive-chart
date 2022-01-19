@@ -14,8 +14,6 @@ class Subchart {
   final List<Color> colors;
   final List<int> hist; //index of data needs to be histogram
   final List<int>? pair; //index of a pair, length must be equal to 2
-  late final Map<String, String> Function(int index, List<List<double?>> values)
-      info;
 
   final bool zeroLine;
 
@@ -31,28 +29,16 @@ class Subchart {
     switch (indicator) {
       case Indicator.ROC:
         data.add(CandleData.computeROC(candles, params[0]));
-        info = (i, values) =>
-            {'ROC (12):': values[0][i]?.toStringAsFixed(2) ?? '-'};
         break;
       case Indicator.SMA:
         data.add(CandleData.computeMA(candles, params[0]));
         data.add(CandleData.computeMA(candles, params[1]));
         data.add(CandleData.computeMA(candles, params[2]));
-        info = (i, values) => {
-              'SMA (${params[0]}):': values[0][i]?.toStringAsFixed(2) ?? '-',
-              'SMA (${params[1]}):': values[1][i]?.toStringAsFixed(2) ?? '-',
-              'SMA (${params[2]}):': values[2][i]?.toStringAsFixed(2) ?? '-'
-            };
         break;
       case Indicator.EMA:
         data.add(CandleData.computeEMA(candles, params[0]));
         data.add(CandleData.computeEMA(candles, params[1]));
         data.add(CandleData.computeEMA(candles, params[2]));
-        info = (i, values) => {
-              'EMA (${params[0]}):': values[0][i]?.toStringAsFixed(2) ?? '-',
-              'EMA (${params[1]}):': values[1][i]?.toStringAsFixed(2) ?? '-',
-              'EMA (${params[2]}):': values[2][i]?.toStringAsFixed(2) ?? '-'
-            };
         break;
       case Indicator.WMA:
         // data.add(CandleData.computeWMA(candles, periods[i]));
@@ -72,21 +58,19 @@ class Subchart {
         data.add(r[1]);
         data.add(r[2]);
         data.add(r[0]);
-        info = (i, values) => {
-              'MACD (12,26):': values[0][i]?.toStringAsFixed(2) ?? '-',
-              'Signal (9):': values[1][i]?.toStringAsFixed(2) ?? '-',
-              'Divergence:': values[2][i]?.toStringAsFixed(2) ?? '-',
-            };
         break;
       case Indicator.RSI:
         data.add(CandleData.computeRSI(candles, params[0]));
-        info = (i, values) => {'RSI:': values[0][i]?.toStringAsFixed(2) ?? '-'};
         break;
     }
   }
   Subchart.sma(List<CandleData> candles)
       : this._raw(
-            colors: [Colors.white70],
+            colors: [
+              Colors.red.shade400,
+              Colors.purple.shade100,
+              Colors.yellow.shade300,
+            ],
             candles: candles,
             indicator: Indicator.SMA,
             params: [5, 10, 20],
@@ -95,7 +79,11 @@ class Subchart {
             zeroLine: true);
   Subchart.ema(List<CandleData> candles)
       : this._raw(
-            colors: [Colors.white70],
+            colors: [
+              Colors.red.shade400,
+              Colors.purple.shade100,
+              Colors.yellow.shade300,
+            ],
             candles: candles,
             indicator: Indicator.EMA,
             params: [5, 10, 20],
@@ -136,39 +124,59 @@ class Subchart {
             hist: [2],
             pair: [0, 1]);
 
-  List<String> get labels {
+  Map<String, String Function(int index, List<List<double?>> values)>
+      get labels {
     switch (indicator) {
       case Indicator.SMA:
-        return params.map((element) {
-          return 'SMA ($element)';
-        }).toList();
+        return {
+          'SMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
+          'SMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
+          'SMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.WMA:
-        return params.map((element) {
-          return 'WMA ($element)';
-        }).toList();
+        return {
+          'WMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
+          'WMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
+          'WMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.EMA:
-        return params.map((element) {
-          return 'EMA ($element)';
-        }).toList();
+        return {
+          'EMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
+          'EMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
+          'EMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.RSI:
-        return ["RSI"];
+        return {
+          'RSI (${params[0]})': (i, values) => _formatValue(values[0][i]),
+        };
       case Indicator.MACD:
-        return [
-          "MACD (${params[0]},${params[1]})",
-          "EMA (${params[2]})",
-          "Divergence"
-        ];
+        return {
+          'MACD (${params[0]},${params[1]})': (i, values) =>
+              _formatValue(values[0][i]),
+          'Signal (${params[2]})': (i, values) => _formatValue(values[1][i]),
+          'Divergence': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.Bollinger:
-        return params.map((element) {
-          return 'SMA ($element)';
-        }).toList();
+        return {
+          'SMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
+          'SMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
+          'SMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.SAR:
-        return params.map((element) {
-          return 'SMA ($element)';
-        }).toList();
+        return {
+          'SMA (${params[0]})': (i, values) => _formatValue(values[0][i]),
+          'SMA (${params[1]})': (i, values) => _formatValue(values[1][i]),
+          'SMA (${params[2]})': (i, values) => _formatValue(values[2][i])
+        };
       case Indicator.ROC:
-        return ["ROC (${params[0]})"];
+        return {
+          "ROC (${params[0]})": (i, values) => _formatValue(values[0][i]),
+        };
     }
+  }
+
+  String _formatValue(double? v) {
+    return v?.toStringAsFixed(2) ?? '-';
   }
 
   SubchartRange getRange(int start, int end) {
@@ -224,7 +232,8 @@ class SubchartRange {
     return this.subchart.zeroLine;
   }
 
-  List<String> get labels {
+  Map<String, String Function(int index, List<List<double?>> values)>
+      get labels {
     return this.subchart.labels;
   }
 
@@ -233,10 +242,6 @@ class SubchartRange {
     if (filtered.length == 0) return null;
     var sum = filtered.reduce((a, b) => a + b);
     return sum / filtered.length;
-  }
-
-  Map<String, String> info(i, values) {
-    return subchart.info(i, values);
   }
 
   SubchartRange lerp(SubchartRange another, t) {

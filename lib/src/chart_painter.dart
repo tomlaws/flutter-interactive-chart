@@ -33,6 +33,7 @@ class ChartPainter extends CustomPainter {
     occupied = [];
     // Draw time labels (dates) & price labels
     //_drawTimeLabels2(canvas, params);
+    _drawChartLabels(canvas, params);
     _drawTimeLabels2(canvas, params);
     _drawPriceGridAndLabels(canvas, params);
 
@@ -329,7 +330,7 @@ class ChartPainter extends CustomPainter {
     for (int j = 0; j < params.subcharts.length; j++) {
       final chart = params.subcharts[j];
       if (chart.max == null || chart.min == null) continue;
-      final info = chart.info(i, chart.values);
+      final info = chart.labels;
       final labelPainters = info.keys
           .map((e) => TextPainter(
                 text: TextSpan(
@@ -344,7 +345,7 @@ class ChartPainter extends CustomPainter {
       final valuePainters = info.values
           .map((e) => TextPainter(
                 text: TextSpan(
-                  text: e,
+                  text: e(i, chart.values),
                   style:
                       params.style.overlayTextStyle.apply(color: Colors.white),
                 ),
@@ -510,12 +511,15 @@ class ChartPainter extends CustomPainter {
 
     var additionalChart = params.additionalChart;
     if (additionalChart.values.length > 0) {
-      final info = additionalChart.info(d, additionalChart.values);
+      final info = additionalChart.labels;
       final labels = info.keys
           .mapIndexed(
               (i, t) => makeTP(t, color: params.style.trendLineStyles[i].color))
           .toList();
-      final values = info.values.map((text) => makeTP(text)).toList();
+      final values =
+          info.values.map((f) => makeTP(f(d, additionalChart.values))).toList();
+      if (labels.length == 0) return;
+      var bgHeight = 24.0;
       // Track occpuied
       occupied.addAll([dy, panelRect.bottom]);
       for (int i = 0; i < additionalChart.values.length; i++) {
@@ -524,7 +528,7 @@ class ChartPainter extends CustomPainter {
           canvas.save();
           var y = params.fitPrice(v);
           // check overlap
-          var py = getEmptySpace(y, 24, null);
+          var py = getEmptySpace(y - bgHeight / 2, 24);
 
           //draw
           final rowHeight = max(labels[i].height, values[i].height);
@@ -534,7 +538,7 @@ class ChartPainter extends CustomPainter {
               : pos.dx - fingerSize - rowWidth;
           canvas.translate(px, py);
           final rect = RRect.fromRectAndRadius(
-            Offset.zero & Size(rowWidth, 24),
+            Offset.zero & Size(rowWidth, bgHeight),
             Radius.circular(8),
           );
           canvas.drawRRect(rect, Paint()..color = Colors.black87);
@@ -558,7 +562,7 @@ class ChartPainter extends CustomPainter {
   }
 
   /// [below] indicates prefer putting below overlapped item, auto placement if null
-  double getEmptySpace(double y, double height, bool? below) {
+  double getEmptySpace(double y, double height) {
     for (int j = 0; j < occupied.length; j += 2) {
       double top1 = y;
       double bottom1 = top1 + height;
@@ -568,17 +572,7 @@ class ChartPainter extends CustomPainter {
         // overlapped
         double ry1 = (top2 - y).abs();
         double ry2 = (bottom2 - y).abs();
-        if (below == null) {
-          if (ry2 >= ry1 && top2 - height > 0) {
-            return getEmptySpace(top2 - height - 1, height, false);
-          } else {
-            return getEmptySpace(bottom2 + 1, height, true);
-          }
-        } else if (below == true) {
-          return getEmptySpace(bottom2 + 1, height, true);
-        } else {
-          return getEmptySpace(top2 - height - 1, height, false);
-        }
+        return getEmptySpace(bottom2 + 1, height);
       }
     }
     //0046purple
@@ -747,6 +741,31 @@ class ChartPainter extends CustomPainter {
     }
   }
 
+  void _drawChartLabels(Canvas canvas, PainterParams params) {
+    var c = params.additionalChart;
+    var keys = c.labels.keys;
+    var labelTps = keys
+        .mapIndexed((i, e) => TextPainter(
+              text: TextSpan(
+                text: e,
+                style: params.style.overlayTextStyle.apply(color: c.colors[i]),
+              ),
+            )
+              ..textDirection = TextDirection.ltr
+              ..layout())
+        .toList();
+    var labelX = 0.0;
+    for (int i = 0; i < labelTps.length; i++) {
+      labelTps[i].paint(
+          canvas,
+          Offset(
+            labelX + 8,
+            -labelTps[i].height,
+          ));
+      labelX += labelTps[i].width + 24;
+    }
+  }
+
   void _drawSubchartLabels(Canvas canvas, PainterParams params) {
     for (int i = 0; i < params.subcharts.length; ++i) {
       var c = params.subcharts[i];
@@ -763,7 +782,7 @@ class ChartPainter extends CustomPainter {
 
       // Draw indicator labels
       var labels = c.labels;
-      var labelTps = labels
+      var labelTps = labels.keys
           .mapIndexed((i, e) => TextPainter(
                 text: TextSpan(
                   text: e,
