@@ -259,6 +259,7 @@ class _MyAppState extends State<MyApp> {
                               Subchart.roc()..setCandles(_candleData),
                               Subchart.rsi()..setCandles(_candleData),
                               Subchart.macd()..setCandles(_candleData),
+                              Subchart.mom()..setCandles(_candleData),
                             ],
                             initialVisibleCandleCount: 4 * 60,
                             /** Uncomment the following for examples on optional parameters */

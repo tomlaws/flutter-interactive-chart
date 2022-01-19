@@ -747,6 +747,32 @@ class CandleData {
     }
   }
 
+  static List<double?> _mom(List<double?> inReal, int inTimePeriod) {
+    List<double?> outReal = List.filled(inReal.length, null);
+    var inIdx = inTimePeriod;
+    var outIdx = inTimePeriod;
+    var trailingIdx = 0;
+    for (; inIdx < inReal.length;) {
+      var _in = inReal.elementAt(inIdx);
+      var _trailing = inReal.elementAt(trailingIdx);
+      if (_in == null || _trailing == null) continue;
+      outReal[outIdx] = _in - _trailing;
+      inIdx = inIdx + 1;
+      outIdx = outIdx + 1;
+      trailingIdx = trailingIdx + 1;
+    }
+    return outReal;
+  }
+
+  static List<double?> computeMOM(List<CandleData> data, int inTimePeriod) {
+    try {
+      final outReal = _mom(data.map((e) => e.close).toList(), inTimePeriod);
+      return outReal;
+    } catch (ex) {
+      return List.filled(data.length, null);
+    }
+  }
+
   @override
   String toString() => "<CandleData ($timestamp: $close)>";
 }

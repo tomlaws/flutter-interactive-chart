@@ -63,6 +63,10 @@ class Subchart {
       case Indicator.RSI:
         data.add(CandleData.computeRSI(candles, params[0].toInt()));
         break;
+      case Indicator.MOM:
+        var mom = CandleData.computeMOM(candles, params[0].toInt());
+        data.add(mom);
+        break;
     }
   }
 
@@ -125,6 +129,10 @@ class Subchart {
           indicator: Indicator.MACD,
         );
 
+  Subchart.mom()
+      : this._raw(
+            colors: [Colors.white70], indicator: Indicator.MOM, params: [9]);
+
   Map<String, String Function(int index, List<List<double?>> values)>
       get labels {
     switch (indicator) {
@@ -179,6 +187,10 @@ class Subchart {
         return {
           "ROC (${params[0]})": (i, values) => _formatValue(values[0][i]),
         };
+      case Indicator.MOM:
+        return {
+          "MOM (${params[0]})": (i, values) => _formatValue(values[0][i]),
+        };
     }
   }
 
@@ -209,7 +221,7 @@ class Subchart {
   }
 
   bool get zeroLine {
-    if ([Indicator.ROC, Indicator.MACD].contains(indicator)) {
+    if ([Indicator.ROC, Indicator.MACD, Indicator.MOM].contains(indicator)) {
       return true;
     }
     return false;
