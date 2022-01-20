@@ -122,7 +122,7 @@ class _InteractiveChartState extends State<InteractiveChart> {
                 constraints.biggest.height,
                 widget.style.subchartHeight * widget.subcharts.length +
                     widget.style.timeLabelHeight +
-                    480));
+                    320));
         final w = size.width - widget.style.priceLabelWidth;
         _handleResize(w);
         // Find the visible data range

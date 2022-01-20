@@ -55,7 +55,7 @@ class PainterParams {
       chartSpacing + (subcharts.length * (style.subchartHeight));
 
   double get chartHeight => // height without time labels
-      max(480, size.height - style.timeLabelHeight - subchartsHeight);
+      max(320, size.height - style.timeLabelHeight - subchartsHeight);
 
   double get volumeHeight => chartHeight * style.volumeHeightFactor;
 
