@@ -149,21 +149,9 @@ class _InteractiveChartState extends State<InteractiveChart>
   late Offset _initialFocalPoint;
   PainterParams? _prevParams; // used in onTapUp event
 
-  final List<Subchart> _defaultAdditionalCharts = [
-    Subchart.sma(),
-    Subchart.ema(),
-    Subchart.wma(),
-    Subchart.sar(),
-    Subchart.bollinger(),
-  ];
-  late Subchart _activeAdditionalChart;
-
-  late List<Subchart> _subcharts = [
-    Subchart.roc(),
-    Subchart.rsi(),
-    Subchart.macd(),
-    Subchart.mom(),
-  ];
+  late Subchart _activeAdditionalChart =
+      Config.defaultAdditionalChartOptions[0];
+  late List<Subchart> _subcharts = [];
 
   late TabController periodTabController;
   late TabController additionalChartTabController;
@@ -174,14 +162,13 @@ class _InteractiveChartState extends State<InteractiveChart>
     _period = widget.periods[0];
     periodTabController =
         TabController(length: widget.periods.length, vsync: this);
-    additionalChartTabController =
-        TabController(length: _defaultAdditionalCharts.length, vsync: this);
-    _activeAdditionalChart = _defaultAdditionalCharts[0];
+    additionalChartTabController = TabController(
+        length: Config.defaultAdditionalChartOptions.length, vsync: this);
     _setup();
   }
 
   Future<bool> _setup() async {
-    await Config.loadConfig(_subcharts);
+    await Config.loadConfig(_activeAdditionalChart, _subcharts);
     if (_timer != null) {
       _timer?.cancel();
       _timer = null;
@@ -248,14 +235,15 @@ class _InteractiveChartState extends State<InteractiveChart>
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white60,
                 isScrollable: true,
-                tabs: _defaultAdditionalCharts
+                tabs: Config.defaultAdditionalChartOptions
                     .map((e) => Tab(
                           text: e.indicator.label,
                         ))
                     .toList(),
                 onTap: (i) {
                   setState(() {
-                    _activeAdditionalChart = _defaultAdditionalCharts[i]
+                    _activeAdditionalChart = Config
+                        .defaultAdditionalChartOptions[i]
                       ..setCandles(_candles);
                   });
                 },
@@ -263,8 +251,12 @@ class _InteractiveChartState extends State<InteractiveChart>
               IconButton(
                 iconSize: 16,
                 icon: Icon(Icons.settings),
-                onPressed: () {
-                  Config.showConfigDialog(_subcharts, context);
+                onPressed: () async {
+                  bool confirm = await Config.showConfigDialog(
+                      _activeAdditionalChart, _subcharts, context);
+                  if (confirm) {
+                    setState(() {});
+                  }
                 },
               ))),
       SliverPersistentHeader(

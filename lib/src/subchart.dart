@@ -16,10 +16,12 @@ part 'subchart.g.dart';
 @JsonSerializable()
 @ColorConverter()
 class Subchart {
+  @JsonKey(ignore: true)
   List<List<double?>> data = [];
-  final Indicator indicator;
-  final List<double> params;
-  final List<Color> colors;
+  Indicator indicator;
+  List<double> params;
+  @JsonKey(ignore: true)
+  List<Color> colors;
 
   Subchart(
       {this.data = const [],
@@ -32,6 +34,21 @@ class Subchart {
     required this.params,
     required this.colors,
   });
+
+  void replace(Subchart another) {
+    data = another.data;
+    indicator = another.indicator;
+    params = another.params;
+    colors = another.colors;
+  }
+
+  Subchart cloneWithoutData() {
+    return Subchart(
+        colors: [...this.colors],
+        indicator: this.indicator,
+        params: [...this.params],
+        data: []);
+  }
 
   void setCandles(List<CandleData> candles) {
     data = [];
