@@ -234,30 +234,34 @@ class _InteractiveChartState extends State<InteractiveChart>
     if (additionalChartTabController.index != tabIndex) {
       additionalChartTabController.index = tabIndex;
     }
-    return CustomScrollView(slivers: [
-      SliverPersistentHeader(
-          pinned: true,
-          delegate: _SliverAppBarDelegate(
-              TabBar(
-                controller: additionalChartTabController,
-                indicatorColor: Colors.white,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
-                isScrollable: true,
-                tabs: Config.defaultAdditionalChartOptions
-                    .map((e) => Tab(
-                          text: e.indicator.label,
-                        ))
-                    .toList(),
-                onTap: (i) {
-                  setState(() {
-                    _activeAdditionalChart = Config
-                        .defaultAdditionalChartOptions[i]
-                        .cloneWithoutData()
-                      ..setCandles(_candles);
-                    Config.setAdditionalChart(_activeAdditionalChart);
-                  });
-                },
+    return Column(children: [
+      Container(
+        color: Colors.black54,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(
+            children: [
+              Expanded(
+                child: TabBar(
+                  controller: additionalChartTabController,
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white60,
+                  isScrollable: true,
+                  tabs: Config.defaultAdditionalChartOptions
+                      .map((e) => Tab(
+                            text: e.indicator.label,
+                          ))
+                      .toList(),
+                  onTap: (i) {
+                    setState(() {
+                      _activeAdditionalChart = Config
+                          .defaultAdditionalChartOptions[i]
+                          .cloneWithoutData()
+                        ..setCandles(_candles);
+                      Config.setAdditionalChart(_activeAdditionalChart);
+                    });
+                  },
+                ),
               ),
               IconButton(
                 iconSize: 16,
@@ -269,197 +273,187 @@ class _InteractiveChartState extends State<InteractiveChart>
                     setState(() {});
                   }
                 },
-              ))),
-      SliverPersistentHeader(
-          pinned: true,
-          delegate: _SliverAppBarDelegate(
-              TabBar(
-                controller: periodTabController,
-                indicatorColor: Colors.white,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
-                isScrollable: true,
-                tabs: widget.periodLabels
-                    .map((e) => Tab(
-                          text: e,
-                        ))
-                    .toList(),
-                onTap: (i) {
-                  _period = widget.periods[i];
-                  _update(reset: true);
-                },
+              )
+            ],
+          ),
+          TabBar(
+            controller: periodTabController,
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            isScrollable: true,
+            tabs: widget.periodLabels
+                .map((e) => Tab(
+                      text: e,
+                    ))
+                .toList(),
+            onTap: (i) {
+              _period = widget.periods[i];
+              _update(reset: true);
+            },
+          ),
+        ]),
+      ),
+      Expanded(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final size = Size(
+                constraints.biggest.width,
+                max(
+                    constraints.biggest.height,
+                    widget.style.subchartHeight * _subcharts.length +
+                        widget.style.timeLabelHeight +
+                        320));
+            final w = size.width - widget.style.priceLabelWidth;
+            _handleResize(w);
+            // Find the visible data range
+            final int start = (_startOffset / _candleWidth).floor();
+            final int count = (w / _candleWidth).ceil();
+            final int end = (start + count).clamp(start, _candles.length);
+
+            final candlesInRange = _candles.getRange(start, end).toList();
+
+            _activeAdditionalChart.setCandles(_candles);
+            final additionalChartInRange = _activeAdditionalChart.getRange(
+                start, end < _candles.length ? end + 1 : end);
+
+            if (end < _candles.length) {
+              // Put in an extra item, since it can become visible when scrolling
+              final nextItem = _candles[end];
+              candlesInRange.add(nextItem);
+            }
+
+            // If possible, find neighbouring trend line data,
+            // so the chart could draw better-connected lines
+            final leadingTrends = _candles.at(start - 1)?.trends;
+            final trailingTrends = _candles.at(end + 1)?.trends;
+
+            // Find the horizontal shift needed when drawing the candles.
+            // First, always shift the chart by half a candle, because when we
+            // draw a line using a thick paint, it spreads to both sides.
+            // Then, we find out how much "fraction" of a candle is visible, since
+            // when users scroll, they don't always stop at exact intervals.
+            final halfCandle = _candleWidth / 2;
+            final fractionCandle = _startOffset - start * _candleWidth;
+            final xShift = halfCandle - fractionCandle;
+
+            // Calculate min and max among the visible data
+            double? highest(CandleData c) {
+              if (c.high != null) return c.high;
+              if (c.open != null && c.close != null)
+                return max(c.open!, c.close!);
+              return c.open ?? c.close;
+            }
+
+            double? lowest(CandleData c) {
+              if (c.low != null) return c.low;
+              if (c.open != null && c.close != null)
+                return min(c.open!, c.close!);
+              return c.open ?? c.close;
+            }
+
+            var maxPrice =
+                candlesInRange.map(highest).whereType<double>().reduce(max);
+            var minPrice =
+                candlesInRange.map(lowest).whereType<double>().reduce(min);
+
+            // fix max min by additional chart
+            maxPrice = max(additionalChartInRange.max ?? maxPrice, maxPrice);
+            minPrice = min(additionalChartInRange.min ?? minPrice, minPrice);
+
+            final maxVol = candlesInRange
+                .map((c) => c.volume)
+                .whereType<double>()
+                .reduce(max);
+            final minVol = candlesInRange
+                .map((c) => c.volume)
+                .whereType<double>()
+                .reduce(min);
+
+            // subcharts
+            List<SubchartRange> subchartsInRange = [];
+            for (int i = 0; i < _subcharts.length; ++i) {
+              var subchart = _subcharts[i]..setCandles(_candles);
+              subchartsInRange.add(subchart.getRange(
+                  start, end < _candles.length ? end + 1 : end));
+            }
+
+            final child = TweenAnimationBuilder(
+              tween: PainterParamsTween(
+                end: PainterParams(
+                  candles: candlesInRange,
+                  additionalChart: additionalChartInRange,
+                  subcharts: subchartsInRange,
+                  style: widget.style,
+                  size: size,
+                  candleWidth: _candleWidth,
+                  startOffset: _startOffset,
+                  maxPrice: maxPrice,
+                  minPrice: minPrice,
+                  maxVol: maxVol,
+                  minVol: minVol,
+                  xShift: xShift,
+                  tapPosition: _tapPosition,
+                  leadingTrends: leadingTrends,
+                  trailingTrends: trailingTrends,
+                ),
               ),
-              null)),
-      SliverFillRemaining(
-          child: _loading
-              ? Center(child: CircularProgressIndicator())
-              : LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    final size = Size(
-                        constraints.biggest.width,
-                        max(
-                            constraints.biggest.height,
-                            widget.style.subchartHeight * _subcharts.length +
-                                widget.style.timeLabelHeight +
-                                320));
-                    final w = size.width - widget.style.priceLabelWidth;
-                    _handleResize(w);
-                    // Find the visible data range
-                    final int start = (_startOffset / _candleWidth).floor();
-                    final int count = (w / _candleWidth).ceil();
-                    final int end =
-                        (start + count).clamp(start, _candles.length);
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              builder: (_, PainterParams params, __) {
+                _prevParams = params;
+                return RepaintBoundary(
+                  child: CustomPaint(
+                    size: size,
+                    painter: ChartPainter(
+                      params: params,
+                      getTimeLabel: widget.timeLabel ?? defaultTimeLabel,
+                      getPriceLabel: widget.priceLabel ?? defaultPriceLabel,
+                      getOverlayInfo: widget.overlayInfo ?? defaultOverlayInfo,
+                    ),
+                  ),
+                );
+              },
+            );
 
-                    final candlesInRange =
-                        _candles.getRange(start, end).toList();
-
-                    _activeAdditionalChart.setCandles(_candles);
-                    final additionalChartInRange = _activeAdditionalChart
-                        .getRange(start, end < _candles.length ? end + 1 : end);
-
-                    if (end < _candles.length) {
-                      // Put in an extra item, since it can become visible when scrolling
-                      final nextItem = _candles[end];
-                      candlesInRange.add(nextItem);
+            return SingleChildScrollView(
+              child: Listener(
+                onPointerSignal: (signal) {
+                  if (signal is PointerScrollEvent) {
+                    final dy = signal.scrollDelta.dy;
+                    if (dy.abs() > 0) {
+                      _onScaleStart(signal.position);
+                      _onScaleUpdate(
+                        dy > 0 ? 0.9 : 1.1,
+                        signal.position,
+                        w,
+                      );
                     }
-
-                    // If possible, find neighbouring trend line data,
-                    // so the chart could draw better-connected lines
-                    final leadingTrends = _candles.at(start - 1)?.trends;
-                    final trailingTrends = _candles.at(end + 1)?.trends;
-
-                    // Find the horizontal shift needed when drawing the candles.
-                    // First, always shift the chart by half a candle, because when we
-                    // draw a line using a thick paint, it spreads to both sides.
-                    // Then, we find out how much "fraction" of a candle is visible, since
-                    // when users scroll, they don't always stop at exact intervals.
-                    final halfCandle = _candleWidth / 2;
-                    final fractionCandle = _startOffset - start * _candleWidth;
-                    final xShift = halfCandle - fractionCandle;
-
-                    // Calculate min and max among the visible data
-                    double? highest(CandleData c) {
-                      if (c.high != null) return c.high;
-                      if (c.open != null && c.close != null)
-                        return max(c.open!, c.close!);
-                      return c.open ?? c.close;
-                    }
-
-                    double? lowest(CandleData c) {
-                      if (c.low != null) return c.low;
-                      if (c.open != null && c.close != null)
-                        return min(c.open!, c.close!);
-                      return c.open ?? c.close;
-                    }
-
-                    var maxPrice = candlesInRange
-                        .map(highest)
-                        .whereType<double>()
-                        .reduce(max);
-                    var minPrice = candlesInRange
-                        .map(lowest)
-                        .whereType<double>()
-                        .reduce(min);
-
-                    // fix max min by additional chart
-                    maxPrice =
-                        max(additionalChartInRange.max ?? maxPrice, maxPrice);
-                    minPrice =
-                        min(additionalChartInRange.min ?? minPrice, minPrice);
-
-                    final maxVol = candlesInRange
-                        .map((c) => c.volume)
-                        .whereType<double>()
-                        .reduce(max);
-                    final minVol = candlesInRange
-                        .map((c) => c.volume)
-                        .whereType<double>()
-                        .reduce(min);
-
-                    // subcharts
-                    List<SubchartRange> subchartsInRange = [];
-                    for (int i = 0; i < _subcharts.length; ++i) {
-                      var subchart = _subcharts[i]..setCandles(_candles);
-                      subchartsInRange.add(subchart.getRange(
-                          start, end < _candles.length ? end + 1 : end));
-                    }
-
-                    final child = TweenAnimationBuilder(
-                      tween: PainterParamsTween(
-                        end: PainterParams(
-                          candles: candlesInRange,
-                          additionalChart: additionalChartInRange,
-                          subcharts: subchartsInRange,
-                          style: widget.style,
-                          size: size,
-                          candleWidth: _candleWidth,
-                          startOffset: _startOffset,
-                          maxPrice: maxPrice,
-                          minPrice: minPrice,
-                          maxVol: maxVol,
-                          minVol: minVol,
-                          xShift: xShift,
-                          tapPosition: _tapPosition,
-                          leadingTrends: leadingTrends,
-                          trailingTrends: trailingTrends,
-                        ),
-                      ),
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      builder: (_, PainterParams params, __) {
-                        _prevParams = params;
-                        return RepaintBoundary(
-                          child: CustomPaint(
-                            size: size,
-                            painter: ChartPainter(
-                              params: params,
-                              getTimeLabel:
-                                  widget.timeLabel ?? defaultTimeLabel,
-                              getPriceLabel:
-                                  widget.priceLabel ?? defaultPriceLabel,
-                              getOverlayInfo:
-                                  widget.overlayInfo ?? defaultOverlayInfo,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-
-                    return Listener(
-                      onPointerSignal: (signal) {
-                        if (signal is PointerScrollEvent) {
-                          final dy = signal.scrollDelta.dy;
-                          if (dy.abs() > 0) {
-                            _onScaleStart(signal.position);
-                            _onScaleUpdate(
-                              dy > 0 ? 0.9 : 1.1,
-                              signal.position,
-                              w,
-                            );
-                          }
-                        }
-                      },
-                      child: GestureDetector(
-                        // Tap and hold to view candle details
-                        onTapDown: (details) => setState(() {
-                          _tapPosition = details.localPosition;
-                        }),
-                        onTapCancel: () => setState(() => _tapPosition = null),
-                        onTapUp: (_) {
-                          setState(() => _tapPosition = null);
-                          // Fire callback event (if needed)
-                          if (widget.onTap != null) _fireOnTapEvent();
-                        },
-                        // Pan and zoom
-                        onScaleStart: (details) =>
-                            _onScaleStart(details.localFocalPoint),
-                        onScaleUpdate: (details) => _onScaleUpdate(
-                            details.scale, details.localFocalPoint, w),
-                        child: child,
-                      ),
-                    );
+                  }
+                },
+                child: GestureDetector(
+                  // Tap and hold to view candle details
+                  onTapDown: (details) => setState(() {
+                    _tapPosition = details.localPosition;
+                  }),
+                  onTapCancel: () => setState(() => _tapPosition = null),
+                  onTapUp: (_) {
+                    setState(() => _tapPosition = null);
+                    // Fire callback event (if needed)
+                    if (widget.onTap != null) _fireOnTapEvent();
                   },
-                ))
+                  // Pan and zoom
+                  onScaleStart: (details) =>
+                      _onScaleStart(details.localFocalPoint),
+                  onScaleUpdate: (details) =>
+                      _onScaleUpdate(details.scale, details.localFocalPoint, w),
+                  child: child,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     ]);
   }
 

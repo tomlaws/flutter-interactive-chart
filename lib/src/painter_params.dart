@@ -56,7 +56,6 @@ class PainterParams {
 
   double get chartHeight => // height without time labels
       max(320, size.height - style.timeLabelHeight - subchartsHeight);
-
   double get volumeHeight => chartHeight * style.volumeHeightFactor;
 
   double get priceHeight => chartHeight - volumeHeight;
