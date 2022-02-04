@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -8,11 +9,13 @@ import 'package:interactive_chart/src/subchart.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'candle_data.dart';
 import 'chart_painter.dart';
 import 'chart_style.dart';
 import 'indicator.dart';
+import 'config.dart';
 
 import 'painter_params.dart';
 import 'package:http/http.dart' as http;
@@ -155,7 +158,7 @@ class _InteractiveChartState extends State<InteractiveChart>
   ];
   late Subchart _activeAdditionalChart;
 
-  final List<Subchart> _subcharts = [
+  late List<Subchart> _subcharts = [
     Subchart.roc(),
     Subchart.rsi(),
     Subchart.macd(),
@@ -177,7 +180,8 @@ class _InteractiveChartState extends State<InteractiveChart>
     _setup();
   }
 
-  void _setup() async {
+  Future<bool> _setup() async {
+    await Config.loadConfig(_subcharts);
     if (_timer != null) {
       _timer?.cancel();
       _timer = null;
@@ -188,6 +192,7 @@ class _InteractiveChartState extends State<InteractiveChart>
       _update();
     });
     _loading = false;
+    return true;
   }
 
   @override
@@ -258,7 +263,9 @@ class _InteractiveChartState extends State<InteractiveChart>
               IconButton(
                 iconSize: 16,
                 icon: Icon(Icons.settings),
-                onPressed: () {},
+                onPressed: () {
+                  Config.showConfigDialog(_subcharts, context);
+                },
               ))),
       SliverPersistentHeader(
           pinned: true,

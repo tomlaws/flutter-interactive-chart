@@ -1,4 +1,5 @@
 //enum Subchart { rsi }
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -6,12 +7,25 @@ import 'package:interactive_chart/interactive_chart.dart';
 import 'chart_painter.dart';
 import 'package:collection/collection.dart';
 import 'dart:math';
+import 'package:json_annotation/json_annotation.dart';
 
+import 'color_converter.dart';
+
+part 'subchart.g.dart';
+
+@JsonSerializable()
+@ColorConverter()
 class Subchart {
   List<List<double?>> data = [];
   final Indicator indicator;
   final List<double> params;
   final List<Color> colors;
+
+  Subchart(
+      {this.data = const [],
+      required this.indicator,
+      required this.params,
+      required this.colors});
 
   Subchart._raw({
     required this.indicator,
@@ -248,6 +262,10 @@ class Subchart {
       max: maxValue,
     );
   }
+
+  factory Subchart.fromJson(Map<String, dynamic> json) =>
+      _$SubchartFromJson(json);
+  Map<String, dynamic> toJson() => _$SubchartToJson(this);
 }
 
 class SubchartRange {
