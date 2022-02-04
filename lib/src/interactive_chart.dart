@@ -276,21 +276,24 @@ class _InteractiveChartState extends State<InteractiveChart>
               )
             ],
           ),
-          TabBar(
-            controller: periodTabController,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white60,
-            isScrollable: true,
-            tabs: widget.periodLabels
-                .map((e) => Tab(
-                      text: e,
-                    ))
-                .toList(),
-            onTap: (i) {
-              _period = widget.periods[i];
-              _update(reset: true);
-            },
+          Container(
+            width: double.infinity,
+            child: TabBar(
+              controller: periodTabController,
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              isScrollable: true,
+              tabs: widget.periodLabels
+                  .map((e) => Tab(
+                        text: e,
+                      ))
+                  .toList(),
+              onTap: (i) {
+                _period = widget.periods[i];
+                _update(reset: true);
+              },
+            ),
           ),
         ]),
       ),
