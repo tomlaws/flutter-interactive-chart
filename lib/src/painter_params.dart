@@ -70,7 +70,7 @@ class PainterParams {
     return i;
   }
 
-  double paddingY = 24.0;
+  double paddingY = 36.0;
   double fitPrice(double y) =>
       paddingY +
       (priceHeight - paddingY * 2) * (maxPrice - y) / (maxPrice - minPrice);

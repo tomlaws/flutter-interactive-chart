@@ -36,81 +36,104 @@ class Config {
           contentPadding: EdgeInsets.symmetric(horizontal: 16),
           actionsPadding: EdgeInsets.all(8),
           title: const Text('設定'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: [
-                Text('主圖層'),
-                Container(
-                  height: 8,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButton<Subchart>(
-                        value: defaultAdditionalChartOptions.firstWhere(
-                            (element) =>
-                                element.indicator ==
-                                cloneAdditionalChart.indicator),
-                        onChanged: (Subchart? newValue) {
-                          if (newValue != null) {
-                            cloneAdditionalChart = newValue.cloneWithoutData();
-                          }
-                        },
-                        items: defaultAdditionalChartOptions
-                            .map<DropdownMenuItem<Subchart>>((Subchart value) {
-                          return DropdownMenuItem<Subchart>(
-                            value: value,
-                            child: Text(value.indicator.label),
-                          );
-                        }).toList(),
-                        isDense: true,
-                        isExpanded: true,
+          content: StatefulBuilder(builder: (context, setState) {
+            return SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  Text(
+                    '主圖層',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Container(
+                    height: 8,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButton<Subchart>(
+                          value: defaultAdditionalChartOptions.firstWhere(
+                              (element) =>
+                                  element.indicator ==
+                                  cloneAdditionalChart.indicator),
+                          onChanged: (Subchart? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                cloneAdditionalChart =
+                                    newValue.cloneWithoutData();
+                              });
+                            }
+                          },
+                          items: defaultAdditionalChartOptions
+                              .map<DropdownMenuItem<Subchart>>(
+                                  (Subchart value) {
+                            return DropdownMenuItem<Subchart>(
+                              value: value,
+                              child: Text(value.indicator.label),
+                            );
+                          }).toList(),
+                          isDense: true,
+                          isExpanded: true,
+                        ),
                       ),
-                    ),
-                    TextButton(onPressed: () {}, child: Text('參數')),
-                  ],
-                ),
-                ...(defaultSubchartOptions
-                    .mapIndexed((i, e) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8.0),
-                                child: Text('圖層 ${i + 1}'),
-                              ),
-                              Row(children: [
-                                Expanded(
-                                  child: DropdownButton<Subchart>(
-                                    value: defaultSubchartOptions.firstWhere(
-                                        (element) =>
-                                            element.indicator ==
-                                            cloneSubcharts[i].indicator),
-                                    onChanged: (Subchart? newValue) {
-                                      if (newValue != null) {
-                                        cloneSubcharts[i] =
-                                            newValue.cloneWithoutData();
-                                      }
-                                    },
-                                    items: defaultSubchartOptions
-                                        .map<DropdownMenuItem<Subchart>>(
-                                            (Subchart value) {
-                                      return DropdownMenuItem<Subchart>(
-                                        value: value,
-                                        child: Text(value.indicator.label),
-                                      );
-                                    }).toList(),
-                                    isDense: true,
-                                    isExpanded: true,
+                      TextButton(onPressed: () {}, child: Text('參數')),
+                    ],
+                  ),
+                  ...(defaultSubchartOptions
+                      .mapIndexed((i, e) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Text(
+                                    '圖層 ${i + 1}',
+                                    style: TextStyle(
+                                        color: Colors.white70, fontSize: 14),
                                   ),
                                 ),
-                                TextButton(onPressed: () {}, child: Text('參數')),
-                              ])
-                            ]))
-                    .toList())
-              ],
-            ),
-          ),
+                                Row(children: [
+                                  Expanded(
+                                    child: DropdownButton<Subchart>(
+                                      value: defaultSubchartOptions.firstWhere(
+                                          (element) =>
+                                              element.indicator ==
+                                              cloneSubcharts[i].indicator),
+                                      onChanged: (Subchart? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            cloneSubcharts[i] =
+                                                newValue.cloneWithoutData();
+                                          });
+                                        }
+                                      },
+                                      items: defaultSubchartOptions
+                                          .where((element) =>
+                                              !subcharts
+                                                  .map((e) => e.indicator)
+                                                  .contains(
+                                                      element.indicator) ||
+                                              cloneSubcharts[i].indicator ==
+                                                  element.indicator)
+                                          .map<DropdownMenuItem<Subchart>>(
+                                              (Subchart value) {
+                                        return DropdownMenuItem<Subchart>(
+                                          value: value,
+                                          child: Text(value.indicator.label),
+                                        );
+                                      }).toList(),
+                                      isDense: true,
+                                      isExpanded: true,
+                                    ),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {}, child: Text('參數')),
+                                ])
+                              ]))
+                      .toList())
+                ],
+              ),
+            );
+          }),
           actions: <Widget>[
             TextButton(
               child: const Text('取消'),
@@ -132,18 +155,44 @@ class Config {
       additionalChart.replace(cloneAdditionalChart);
       subcharts.clear();
       subcharts.addAll(cloneSubcharts);
+      await saveConfig(additionalChart, subcharts);
       return true;
     }
     return false;
   }
 
+  static Future<void> saveConfig(
+      Subchart additionalChart, List<Subchart> subcharts) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('additionalChart', jsonEncode(additionalChart));
+      prefs.setString('subcharts', jsonEncode(subcharts));
+    } catch (ex) {
+      print(ex);
+    }
+  }
+
+  static Future<void> setAdditionalChart(Subchart additionalChart) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('additionalChart', jsonEncode(additionalChart));
+    } catch (ex) {
+      print(ex);
+    }
+  }
+
   static Future<void> loadConfig(
-      Subchart subchart, List<Subchart> subcharts) async {
+      Subchart additionalChart, List<Subchart> subcharts) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       // Load default setting
-      subcharts.addAll(defaultSubchartOptions);
-
+      subcharts.clear();
+      subcharts.addAll(defaultSubchartOptions.map((e) => e.cloneWithoutData()));
+      if (prefs.containsKey('additionalChart')) {
+        Map<String, dynamic> json =
+            jsonDecode(prefs.getString('additionalChart')!);
+        additionalChart.replace(Subchart.fromJson(json));
+      }
       if (prefs.containsKey('subcharts')) {
         List<dynamic> jsonSubcharts = jsonDecode(prefs.getString('subcharts')!);
         // Length equals to default options

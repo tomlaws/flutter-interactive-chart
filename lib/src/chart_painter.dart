@@ -767,7 +767,7 @@ class ChartPainter extends CustomPainter {
         .toList();
     var labelX = 0.0;
     for (int i = 0; i < labelTps.length; i++) {
-      labelTps[i].paint(canvas, Offset(labelX + 8, 4));
+      labelTps[i].paint(canvas, Offset(labelX + 8, 12));
       labelX += labelTps[i].width + 24;
     }
   }

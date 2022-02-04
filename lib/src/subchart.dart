@@ -1,4 +1,3 @@
-//enum Subchart { rsi }
 import 'dart:convert';
 import 'dart:ui';
 
@@ -9,45 +8,32 @@ import 'package:collection/collection.dart';
 import 'dart:math';
 import 'package:json_annotation/json_annotation.dart';
 
-import 'color_converter.dart';
-
 part 'subchart.g.dart';
 
 @JsonSerializable()
-@ColorConverter()
 class Subchart {
   @JsonKey(ignore: true)
   List<List<double?>> data = [];
   Indicator indicator;
   List<double> params;
-  @JsonKey(ignore: true)
-  List<Color> colors;
 
   Subchart(
-      {this.data = const [],
-      required this.indicator,
-      required this.params,
-      required this.colors});
+      {this.data = const [], required this.indicator, required this.params});
 
   Subchart._raw({
     required this.indicator,
     required this.params,
-    required this.colors,
   });
 
   void replace(Subchart another) {
     data = another.data;
     indicator = another.indicator;
     params = another.params;
-    colors = another.colors;
   }
 
   Subchart cloneWithoutData() {
     return Subchart(
-        colors: [...this.colors],
-        indicator: this.indicator,
-        params: [...this.params],
-        data: []);
+        indicator: this.indicator, params: [...this.params], data: []);
   }
 
   void setCandles(List<CandleData> candles) {
@@ -101,68 +87,24 @@ class Subchart {
     }
   }
 
-  Subchart.sma()
-      : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.purple.shade100,
-              Colors.yellow.shade300,
-            ],
-            indicator: Indicator.SMA,
-            params: [5, 10, 20]);
-  Subchart.ema()
-      : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.purple.shade100,
-              Colors.yellow.shade300,
-            ],
-            indicator: Indicator.EMA,
-            params: [5, 10, 20]);
-  Subchart.wma()
-      : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.purple.shade100,
-              Colors.yellow.shade300,
-            ],
-            indicator: Indicator.WMA,
-            params: [5, 10, 20]);
-  Subchart.sar()
-      : this._raw(
-            colors: [
-              Colors.white70,
-            ],
-            indicator: Indicator.SAR,
-            params: [0.02, 0.2]);
+  Subchart.sma() : this._raw(indicator: Indicator.SMA, params: [5, 10, 20]);
+  Subchart.ema() : this._raw(indicator: Indicator.EMA, params: [5, 10, 20]);
+  Subchart.wma() : this._raw(indicator: Indicator.WMA, params: [5, 10, 20]);
+  Subchart.sar() : this._raw(indicator: Indicator.SAR, params: [0.02, 0.2]);
   Subchart.bollinger()
-      : this._raw(
-            colors: [
-              Colors.red.shade400,
-              Colors.red.shade400,
-              Colors.yellow.shade300,
-            ],
-            indicator: Indicator.BOLLINGER,
-            params: [20, 2]);
+      : this._raw(indicator: Indicator.BOLLINGER, params: [20, 2]);
 
-  Subchart.roc()
-      : this._raw(
-            colors: [Colors.white70], indicator: Indicator.ROC, params: [12]);
+  Subchart.roc() : this._raw(indicator: Indicator.ROC, params: [12]);
 
-  Subchart.rsi()
-      : this._raw(
-            colors: [Colors.white70], indicator: Indicator.RSI, params: [14]);
+  Subchart.rsi() : this._raw(indicator: Indicator.RSI, params: [14]);
 
   Subchart.macd()
       : this._raw(
-          colors: [Colors.red, Colors.green, Colors.white70],
           params: [12, 26, 9],
           indicator: Indicator.MACD,
         );
 
-  Subchart.mom()
-      : this._raw(
-            colors: [Colors.white70], indicator: Indicator.MOM, params: [9]);
+  Subchart.mom() : this._raw(indicator: Indicator.MOM, params: [9]);
 
   Map<String, String Function(int index, List<List<double?>> values)>
       get labels {
@@ -222,6 +164,47 @@ class Subchart {
         return {
           "MOM (${params[0]})": (i, values) => _formatValue(values[0][i]),
         };
+    }
+  }
+
+  List<Color> get colors {
+    switch (indicator) {
+      case Indicator.SMA:
+        return [
+          Colors.red.shade400,
+          Colors.purple.shade100,
+          Colors.yellow.shade300,
+        ];
+      case Indicator.WMA:
+        return [
+          Colors.red.shade400,
+          Colors.purple.shade100,
+          Colors.yellow.shade300,
+        ];
+      case Indicator.EMA:
+        return [
+          Colors.red.shade400,
+          Colors.purple.shade100,
+          Colors.yellow.shade300,
+        ];
+      case Indicator.RSI:
+        return [Colors.white70];
+      case Indicator.MACD:
+        return [Colors.red, Colors.green, Colors.white70];
+      case Indicator.BOLLINGER:
+        return [
+          Colors.red.shade400,
+          Colors.red.shade400,
+          Colors.yellow.shade300,
+        ];
+      case Indicator.SAR:
+        return [
+          Colors.white70,
+        ];
+      case Indicator.ROC:
+        return [Colors.white70];
+      case Indicator.MOM:
+        return [Colors.white70];
     }
   }
 

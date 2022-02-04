@@ -150,7 +150,7 @@ class _InteractiveChartState extends State<InteractiveChart>
   PainterParams? _prevParams; // used in onTapUp event
 
   late Subchart _activeAdditionalChart =
-      Config.defaultAdditionalChartOptions[0];
+      Config.defaultAdditionalChartOptions[0].cloneWithoutData();
   late List<Subchart> _subcharts = [];
 
   late TabController periodTabController;
@@ -216,7 +216,6 @@ class _InteractiveChartState extends State<InteractiveChart>
             timestamp: timestamp));
       }
     });
-    _activeAdditionalChart..setCandles(_candles);
     if (reset) {
       _prevStartOffset = _startOffset = double.infinity;
     }
@@ -225,6 +224,11 @@ class _InteractiveChartState extends State<InteractiveChart>
 
   @override
   Widget build(BuildContext context) {
+    int tabIndex = Config.defaultAdditionalChartOptions.indexWhere(
+        (element) => element.indicator == _activeAdditionalChart.indicator);
+    if (additionalChartTabController.index != tabIndex) {
+      additionalChartTabController.index = tabIndex;
+    }
     return CustomScrollView(slivers: [
       SliverPersistentHeader(
           pinned: true,
@@ -244,7 +248,9 @@ class _InteractiveChartState extends State<InteractiveChart>
                   setState(() {
                     _activeAdditionalChart = Config
                         .defaultAdditionalChartOptions[i]
+                        .cloneWithoutData()
                       ..setCandles(_candles);
+                    Config.setAdditionalChart(_activeAdditionalChart);
                   });
                 },
               ),
@@ -279,9 +285,6 @@ class _InteractiveChartState extends State<InteractiveChart>
                 },
               ),
               null)),
-      SliverToBoxAdapter(
-        child: Container(height: 8),
-      ),
       SliverFillRemaining(
           child: _loading
               ? Center(child: CircularProgressIndicator())
@@ -305,6 +308,7 @@ class _InteractiveChartState extends State<InteractiveChart>
                     final candlesInRange =
                         _candles.getRange(start, end).toList();
 
+                    _activeAdditionalChart.setCandles(_candles);
                     final additionalChartInRange = _activeAdditionalChart
                         .getRange(start, end < _candles.length ? end + 1 : end);
 
