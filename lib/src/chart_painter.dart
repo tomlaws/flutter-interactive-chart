@@ -331,7 +331,7 @@ class ChartPainter extends CustomPainter {
       double? v = additionalChart.values[j].at(i);
       if (v == null) continue;
       var py = params.fitPrice(v);
-      canvas.drawCircle(Offset(px, py), min(4, params.candleWidth / 2),
+      canvas.drawCircle(Offset(px, py), min(4.0, params.candleWidth / 2),
           Paint()..color = params.additionalChart.colors[j]);
     }
 
