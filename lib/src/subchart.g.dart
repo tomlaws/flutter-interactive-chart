@@ -8,9 +8,7 @@ part of 'subchart.dart';
 
 Subchart _$SubchartFromJson(Map<String, dynamic> json) => Subchart(
       indicator: $enumDecode(_$IndicatorEnumMap, json['indicator']),
-      params: (json['params'] as List<dynamic>)
-          .map((e) => (e as num).toDouble())
-          .toList(),
+      params: (json['params'] as List<dynamic>).map((e) => e as num).toList(),
     );
 
 Map<String, dynamic> _$SubchartToJson(Subchart instance) => <String, dynamic>{

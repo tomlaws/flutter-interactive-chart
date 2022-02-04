@@ -596,7 +596,7 @@ class ChartPainter extends CustomPainter {
     return y;
   }
 
-  void _drawSubcharts(canvas, PainterParams params) {
+  void _drawSubcharts(Canvas canvas, PainterParams params) {
     for (int i = 0; i < params.subcharts.length; ++i) {
       canvas.save();
       canvas.clipRect(Offset.zero &
@@ -608,11 +608,11 @@ class ChartPainter extends CustomPainter {
                   params.subchartHeight * (i + 1)));
       // draw background
       canvas.translate(
-          0,
+          0.0,
           params.chartHeight +
               params.style.timeLabelHeight +
               params.chartSpacing +
-              params.subchartHeight * i);
+              params.subchartHeight * i.toDouble());
       RRect rect = RRect.fromRectAndRadius(
         Offset.zero & Size(params.chartWidth, params.style.subchartHeight),
         Radius.zero,
@@ -625,7 +625,6 @@ class ChartPainter extends CustomPainter {
       var values = subchart.values;
       var minValue = subchart.min;
       var maxValue = subchart.max;
-
       for (int j = 0; j < values.length; ++j) {
         var leading = subchart.leading[j];
         var trailing = subchart.trailing[j];

@@ -224,6 +224,11 @@ class _InteractiveChartState extends State<InteractiveChart>
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     int tabIndex = Config.defaultAdditionalChartOptions.indexWhere(
         (element) => element.indicator == _activeAdditionalChart.indicator);
     if (additionalChartTabController.index != tabIndex) {

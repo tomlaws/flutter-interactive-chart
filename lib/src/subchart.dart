@@ -15,7 +15,7 @@ class Subchart {
   @JsonKey(ignore: true)
   List<List<double?>> data = [];
   Indicator indicator;
-  List<double> params;
+  List<num> params;
 
   Subchart(
       {this.data = const [], required this.indicator, required this.params});
@@ -61,14 +61,15 @@ class Subchart {
         data.add(CandleData.computeEMA(candles, params[0].toInt()));
         break;
       case Indicator.BOLLINGER:
-        var r = CandleData.computeBBands(
-            candles, params[0].toInt(), params[1], params[1]);
+        var r = CandleData.computeBBands(candles, params[0].toInt(),
+            params[1].toDouble(), params[1].toDouble());
         data.add(r[2]);
         data.add(r[0]);
         data.add(r[1]);
         break;
       case Indicator.SAR:
-        data.add(CandleData.computeSAR(candles, params[0], params[1]));
+        data.add(CandleData.computeSAR(
+            candles, params[0].toDouble(), params[1].toDouble()));
         break;
       case Indicator.MACD:
         var r = CandleData.computeMACD(
@@ -92,7 +93,7 @@ class Subchart {
   Subchart.wma() : this._raw(indicator: Indicator.WMA, params: [5, 10, 20]);
   Subchart.sar() : this._raw(indicator: Indicator.SAR, params: [0.02, 0.2]);
   Subchart.bollinger()
-      : this._raw(indicator: Indicator.BOLLINGER, params: [20, 2]);
+      : this._raw(indicator: Indicator.BOLLINGER, params: [20, 2.0]);
 
   Subchart.roc() : this._raw(indicator: Indicator.ROC, params: [12]);
 

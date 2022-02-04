@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:collection/collection.dart';
 
@@ -80,7 +81,12 @@ class Config {
                           isExpanded: true,
                         ),
                       ),
-                      TextButton(onPressed: () {}, child: Text('參數')),
+                      TextButton(
+                          onPressed: () {
+                            showParamConfigDialog(
+                                cloneAdditionalChart, context);
+                          },
+                          child: Text('參數')),
                     ],
                   ),
                   ...(defaultSubchartOptions
@@ -131,7 +137,11 @@ class Config {
                                     ),
                                   ),
                                   TextButton(
-                                      onPressed: () {}, child: Text('參數')),
+                                      onPressed: () {
+                                        showParamConfigDialog(
+                                            cloneSubcharts[i], context);
+                                      },
+                                      child: Text('參數')),
                                 ])
                               ]))
                       .toList())
@@ -161,6 +171,114 @@ class Config {
       subcharts.clear();
       subcharts.addAll(cloneSubcharts);
       await saveConfig(additionalChart, subcharts);
+      return true;
+    }
+    return false;
+  }
+
+  static Future<bool> showParamConfigDialog(
+      Subchart subchart, BuildContext context) async {
+    Subchart cloneSubchart = subchart.cloneWithoutData();
+
+    var confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        final _formKey = GlobalKey<FormState>();
+        return AlertDialog(
+          titlePadding: EdgeInsets.all(16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+          actionsPadding: EdgeInsets.all(8),
+          title: const Text('參數設定'),
+          content: StatefulBuilder(builder: (context, setState) {
+            return SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: ListBody(
+                  children: cloneSubchart.params
+                      .mapIndexed((i, e) => Padding(
+                            padding: EdgeInsets.only(
+                                bottom: (i == cloneSubchart.params.length - 1
+                                    ? 0
+                                    : 8.0)),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '參數 ${i + 1}',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 14),
+                                ),
+                                Container(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: <TextInputFormatter>[
+                                      e is double
+                                          ? FilteringTextInputFormatter.allow(
+                                              RegExp('[0-9.,]+'))
+                                          : FilteringTextInputFormatter
+                                              .digitsOnly
+                                    ],
+                                    style: TextStyle(fontSize: 14),
+                                    initialValue: e.toString(),
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      isCollapsed: true,
+                                      contentPadding: EdgeInsets.all(8),
+                                    ),
+                                    textAlignVertical: TextAlignVertical.center,
+                                    onSaved: (value) {
+                                      if (value == null) return;
+                                      cloneSubchart.params[i] = e is double
+                                          ? (double.tryParse(value) ?? e)
+                                          : (int.tryParse(value) ?? e);
+                                    },
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return '不能為空';
+                                      }
+                                      if (!(e is double || e is int))
+                                        return '請輸入正確數值';
+                                      if (e is double) {
+                                        if (double.tryParse(value) == null) {
+                                          return '請輸入正確數值';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+            );
+          }),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('取消'),
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+            ),
+            TextButton(
+              child: const Text('確定'),
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  _formKey.currentState!.save();
+                  Navigator.pop(context, true);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm == true) {
+      subchart.replace(cloneSubchart);
       return true;
     }
     return false;
