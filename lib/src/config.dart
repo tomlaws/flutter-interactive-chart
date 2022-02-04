@@ -18,6 +18,11 @@ class Config {
     Subchart.roc(),
     Subchart.rsi(),
     Subchart.macd(),
+  ];
+  static List<Subchart> availableSubchartOptions = [
+    Subchart.roc(),
+    Subchart.rsi(),
+    Subchart.macd(),
     Subchart.mom()
   ];
 
@@ -94,8 +99,8 @@ class Config {
                                 Row(children: [
                                   Expanded(
                                     child: DropdownButton<Subchart>(
-                                      value: defaultSubchartOptions.firstWhere(
-                                          (element) =>
+                                      value: availableSubchartOptions
+                                          .firstWhere((element) =>
                                               element.indicator ==
                                               cloneSubcharts[i].indicator),
                                       onChanged: (Subchart? newValue) {
@@ -106,9 +111,9 @@ class Config {
                                           });
                                         }
                                       },
-                                      items: defaultSubchartOptions
+                                      items: availableSubchartOptions
                                           .where((element) =>
-                                              !subcharts
+                                              !cloneSubcharts
                                                   .map((e) => e.indicator)
                                                   .contains(
                                                       element.indicator) ||
