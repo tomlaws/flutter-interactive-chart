@@ -1,10 +1,18 @@
+## 0.3.4
+
+* Fix a potential crash if volume numbers are null.
+
+## 0.3.3
+
+* Fix an issue where `onTap` event was not firing. [(Issue #8)](https://github.com/fluttercandies/flutter-interactive-chart/issues/8)
+
 ## 0.3.2
 
 * Add `initialVisibleCandleCount` parameter for setting a default zoom level. [(Issue #6)](https://github.com/fluttercandies/flutter-interactive-chart/issues/6)
 
 ## 0.3.1
 
-* Allow web and desktop users to zoom the chart with mouse scroll wheel. [(Issue #5)](https://github.com/fluttercandies/flutter-interactive-chart/issues/5)
+* Allow web and desktop users to zoom the chart with mouse scroll wheel. [(Issue #4)](https://github.com/fluttercandies/flutter-interactive-chart/issues/4)
 
 ## 0.3.0
 
